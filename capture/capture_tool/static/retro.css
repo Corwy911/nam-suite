@@ -1,0 +1,270 @@
+/* NAM Capture skin, taken from a 1980s Soviet radio-turntable (Кантата 205 stereo): satin gunmetal panels with a thin champagne
+   edge, black recessed strips printed in white, smoked-glass dial with a red needle, beige piano keys, slide faders, knurled gold
+   knobs with a dished grey cap, mahogany lacquer cabinet. Loaded AFTER page.css: it re-colours and re-shapes, it renames nothing. */
+
+:root {
+  color-scheme: dark;
+  --ink: #1d1d1c; --ink-soft: #46453f; --paper: #ece8db; --paper-dim: #bdb9ab;
+  --g1: #c6c5c0; --g2: #a7a6a1; --g3: #87867f; --g-edge: #4b4a47;
+  --gold1: #efdb9b; --gold2: #b89a52; --gold3: #6d5620; --champagne: rgba(203, 178, 122, .6);
+  --red: #e3441d; --red-glow: rgba(255, 80, 30, .6);
+  --strip1: #1e1e1c; --strip2: #0c0c0b;
+  --key1: #e9e2c1; --key2: #c7c09e; --key3: #a09a7c; --key-edge: #56523c;
+
+  --bg: #dcc49d; --card: var(--g2); --text: var(--ink); --muted: var(--ink-soft); --line: rgba(0, 0, 0, .3);
+  --accent: #b23a15; --accent-text: #fff; --ok: #3f6b12; --warn: #8a5a08; --bad: #b3260e;
+  --input: #111110; --code: #141413;
+
+  --font-head: "Avenir Next Condensed", "DIN Alternate", "Helvetica Neue", sans-serif;
+  --font-body: "Avenir Next", "Helvetica Neue", system-ui, sans-serif;
+  --font-num: "DIN Alternate", "Menlo", ui-monospace, monospace;
+}
+::selection { background: var(--red); color: #fff; }
+
+html { min-height: 100%; }
+body {
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5; color: var(--ink); min-height: 100vh;
+  background:
+    linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
+    radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
+    url("/parquet.svg") 0 0 / 480px 360px,
+    #dcc49d;                                   /* light oak parquet: planks are in parquet.svg */
+  background-attachment: fixed;
+}
+
+/* ------------------------------------------------------------------ layout: fluid, fills the window */
+main {
+  max-width: 1640px; width: 100%; margin: 0 auto; padding: 26px clamp(14px, 3vw, 44px) 76px;
+  display: grid; gap: 22px; align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 540px), 1fr));
+}
+main > header, main > .notice, main > .banner, main > #cardDevice, main > .tabs,
+.pane > #cardLive, .pane > #cardRec, .pane > #cardRes, .pane > #capBrowseBar, .pane > #cardTrainerBrowse,
+.pane > #cardPlCal, .pane > #cardPlSetup, .pane > #cardPlAB { grid-column: 1 / -1; }
+.pane { display: contents; }                       /* a tab's cards stay items of the main grid */
+.pane[hidden] { display: none; }
+.card { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------ the grey units */
+header, .card {
+  position: relative; border-radius: 5px; border: 1px solid #2d2c2a; color: var(--ink);
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .055) 0 1px, transparent 1px 3px),
+              linear-gradient(180deg, var(--g1), var(--g2) 50%, var(--g3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 0 0 2px var(--champagne), inset 0 -3px 0 rgba(0, 0, 0, .28), 0 12px 22px rgba(60, 35, 10, .42);
+}
+.card { padding: 24px 28px 24px; }
+.card::before, .card::after, header::before, header::after {          /* corner screws */
+  content: ""; position: absolute; top: 9px; width: 9px; height: 9px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #dcdbd6, #6f6e6a); box-shadow: inset 0 0 0 1px #3a3936;
+}
+.card::before, header::before { left: 9px; } .card::after, header::after { right: 9px; }
+
+h2, .step-title {
+  font-family: var(--font-head); font-size: 15px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ink); text-shadow: 0 1px 0 rgba(255, 255, 255, .35); margin: 0 0 16px; padding: 0;
+}
+.step-title { display: flex; align-items: center; gap: 14px; }
+.step-num {
+  width: 46px; height: 46px; flex: none; font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -.02em;   /* room for "NAM" and "A/B" inside the ring */
+  background: radial-gradient(circle at 35% 30%, #d8d7d2, #8c8b86) !important;
+  box-shadow: inset 0 0 0 2px #3e3d3a, inset 0 0 0 4px #bdbcb7, 0 1px 0 rgba(255, 255, 255, .5); text-shadow: none;
+}
+
+/* ------------------------------------------------------------------ header: nameplate, dial window, language knob */
+header { display: grid; grid-template-columns: minmax(200px, 300px) 1fr auto; gap: 30px; align-items: center; padding: 22px 34px; }
+.brand h1 { font-family: var(--font-head); font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: .06em; line-height: 1;
+            text-transform: lowercase; color: var(--ink); text-shadow: 0 1px 0 rgba(255, 255, 255, .35); margin: 0; display: block; }
+.brand small { display: block; margin-top: 10px; font: 600 11px var(--font-head); letter-spacing: .24em; color: var(--ink-soft); }
+.dial { position: relative; height: 96px; border-radius: 4px; overflow: hidden; border: 2px solid #57565a;
+        background: linear-gradient(180deg, #3a4046, #161b20 42%, #242a30); box-shadow: inset 0 0 14px #000, 0 1px 0 rgba(255, 255, 255, .55); }
+.dial::before { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255, 255, 255, .16), transparent 38%, transparent 62%, rgba(255, 255, 255, .07)); }
+.dial::after { content: ""; position: absolute; left: 16px; right: 16px; top: 34px; height: 1px; background: rgba(210, 215, 220, .28); }
+.dial .lab { position: absolute; left: 16px; top: 14px; font: 500 10px var(--font-head); letter-spacing: .2em; color: #b8bdc2; }
+.dial .lab.r { left: auto; right: 16px; }
+.dial .ticks { position: absolute; left: 16px; right: 16px; top: 46px; height: 16px; background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 10%); }
+.dial .dots { position: absolute; left: 16px; right: 16px; top: 54px; height: 2px; background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 7px); }
+.dial .nums { position: absolute; left: 12px; right: 12px; top: 66px; display: flex; justify-content: space-between; font: 500 12px var(--font-num); color: #d7dbde; }
+.dial .needle { position: absolute; top: 0; bottom: 0; left: 47%; width: 3px; background: linear-gradient(#ff7a4a, var(--red)); box-shadow: 0 0 9px var(--red-glow); }
+.topbar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.knob-cap-label { font: 600 10px var(--font-head); letter-spacing: .24em; color: var(--ink); }
+.lang-now { font: 700 12px var(--font-num); letter-spacing: .12em; color: var(--ink-soft); }
+
+/* ------------------------------------------------------------------ text on the grey */
+label { font: 600 10.5px var(--font-head); letter-spacing: .16em; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; }
+.check { text-transform: none; letter-spacing: 0; font: 500 14.5px var(--font-body); color: var(--ink); gap: 14px; margin: 8px 0; }
+.hint, .lock-note { color: var(--ink-soft); }
+.hint { font-size: 12.5px; line-height: 1.45; }
+a { color: #7a1f08; }
+.result-line { font-family: var(--font-head); letter-spacing: .04em; color: var(--ink); }
+.result-line.good, .good { color: var(--ok); } .bad, .error { color: var(--bad); }
+.steps { color: var(--ink); }
+.notice, .banner {
+  background: linear-gradient(180deg, #f0e6c6, #e2d6ae); color: var(--ink); border: 1px solid #8b7a44; border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .45), inset 0 0 0 3px rgba(139, 122, 68, .12); font-size: 14px;
+}
+.banner.demo, .demo { background: linear-gradient(180deg, #f6d9a0, #e9be6c); }
+table.report td, table.lin th, table.lin td { border-bottom-color: rgba(0, 0, 0, .18); }
+table.lin th { color: var(--ink-soft); font-family: var(--font-head); letter-spacing: .06em; }
+details.report summary, summary { color: #7a1f08; }
+.locked { opacity: 1; filter: saturate(.5) brightness(.8); }          /* dimmed by filter only: opacity would let the cabinet show through the metal */
+
+/* ------------------------------------------------------------------ black recessed strips, printed in white */
+.card .row, .card > .field {
+  background: linear-gradient(180deg, var(--strip1), var(--strip2)); border-radius: 3px; padding: 14px 18px 8px; margin-bottom: 14px;
+  box-shadow: inset 0 3px 8px #000, inset 0 0 0 1px #2c2c2a, 0 1px 0 rgba(255, 255, 255, .55);
+}
+.card .row label, .card > .field > label { color: var(--paper); }
+.card .row .hint, .card > .field .hint { color: var(--paper-dim); }
+.card .row .field, .card .row .field-inline { margin-bottom: 6px; }
+.card .row a, .card > .field a { color: #f0c98a; }
+.card .row .check, .card > .field .check, .card .row .field-inline label, .card > .field .field-inline label { color: var(--paper); }
+
+/* ------------------------------------------------------------------ fields: dark windows */
+input[type=text], input[type=number], select, .live-picker-trigger {
+  background-color: var(--input); color: #e6e2d3; border: 1px solid #3b3b38; border-radius: 3px; padding: 9px 12px;
+  box-shadow: inset 0 2px 5px #000; font-family: var(--font-body); font-weight: 500;
+}
+input[type=number], .stepper input { font-family: var(--font-num); font-size: 14px; letter-spacing: .05em; text-align: center; }
+input::placeholder { color: rgba(230, 226, 211, .35); }
+select, .live-picker-trigger {
+  appearance: none; -webkit-appearance: none; padding-right: 34px; text-align: left;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23b89a52' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.live-picker-trigger .arrow { display: none; }
+input:focus, select:focus, button:focus-visible, .knob:focus-visible, .slot:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+input[type=number]::-webkit-inner-spin-button { filter: invert(.8); }
+
+/* keys, latching keys with a lamp, radio lamps */
+button {
+  font: 600 12px var(--font-head); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border-radius: 2px 2px 4px 4px; padding: 9px 16px;
+  border: 1px solid var(--key-edge); text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+  background: linear-gradient(180deg, var(--key1), var(--key2) 55%, var(--key3));
+  box-shadow: 0 4px 0 var(--key-edge), 0 6px 6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .7);
+  transition: transform .05s, box-shadow .05s, filter .15s;
+}
+button:hover:not(:disabled) { filter: brightness(1.06); }
+button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-edge), inset 0 2px 4px rgba(0, 0, 0, .3); }
+button:disabled { opacity: .5; filter: saturate(.4) brightness(.85); box-shadow: 0 1px 0 var(--key-edge); }
+button.primary { background: linear-gradient(180deg, #f3e3a8, #d6b968 55%, #a98b3f); border-color: var(--gold3); box-shadow: 0 4px 0 var(--gold3), 0 6px 6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .7); }
+button.primary:active:not(:disabled) { box-shadow: 0 1px 0 var(--gold3), inset 0 2px 4px rgba(0, 0, 0, .3); }
+#liveStop, #recStop, #resDiscard, button.danger {
+  color: #fff; text-shadow: 0 1px 0 rgba(0, 0, 0, .4); border-color: #6d1a05;
+  background: linear-gradient(180deg, #f0714a, #dc3a14 55%, #a92a0b); box-shadow: 0 4px 0 #6d1a05, 0 6px 6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+button.small { padding: 6px 12px; font-size: 11px; }
+.edit-tabs { display: flex; gap: 8px; margin: 4px 0 14px; }
+.actions { gap: 12px; }
+.stepper { gap: 8px; }
+.stepper button { padding: 0 13px; font: 700 18px var(--font-num); letter-spacing: 0; }
+
+input[type=checkbox], input[type=radio] {
+  appearance: none; -webkit-appearance: none; position: relative; flex: none; margin: 0; cursor: pointer;
+  border: 1px solid var(--key-edge); background: linear-gradient(180deg, var(--key1), var(--key2) 55%, var(--key3));
+  box-shadow: 0 3px 0 var(--key-edge), 0 5px 5px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .7); transition: transform .05s, box-shadow .05s;
+}
+input[type=checkbox] { width: 38px; height: 24px; border-radius: 2px 2px 4px 4px; }
+input[type=radio] { width: 20px; height: 20px; border-radius: 50%; }
+input[type=checkbox]:checked, input[type=radio]:checked {
+  transform: translateY(2px); background: linear-gradient(180deg, #b6b092, #9c967a 60%, #857f66); box-shadow: 0 1px 0 var(--key-edge), inset 0 2px 4px rgba(0, 0, 0, .35);
+}
+input[type=checkbox]::after {                       /* the lamp above the key */
+  content: ""; position: absolute; left: 50%; top: -12px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%;
+  background: #4a4a46; box-shadow: inset 0 0 0 1px #000;
+}
+input[type=checkbox]:checked::after { background: radial-gradient(circle at 35% 30%, #ffd0a0, var(--red) 55%, #8f200b); box-shadow: 0 0 9px 2px var(--red-glow); }
+input[type=radio]:checked::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffd0a0, var(--red) 55%, #8f200b); box-shadow: 0 0 8px 2px var(--red-glow); }
+input:disabled { opacity: .55; cursor: not-allowed; }
+
+.live-picker-trigger { font-weight: 500; letter-spacing: 0; text-transform: none; text-shadow: none; transform: none; }
+.live-picker-trigger:active:not(:disabled) { transform: none; }
+.live-picker-menu, .live-context-menu { background: linear-gradient(180deg, #2a2926, #131312); border: 1px solid var(--gold2); border-radius: 3px; box-shadow: 0 12px 28px rgba(0, 0, 0, .75); }
+.live-picker-row { color: var(--paper); }
+.live-picker-row:hover, .live-picker-row.active { background: rgba(227, 68, 29, .28); }
+.live-context-menu button { background: none; box-shadow: none; border: 0; text-shadow: none; color: #ff9a80; text-transform: none; letter-spacing: 0; font: 500 14px var(--font-body); }
+.live-context-menu button:hover { background: rgba(255, 106, 77, .18); }
+
+/* ------------------------------------------------------------------ level windows: dotted scale, red needle */
+.meter { grid-template-columns: minmax(70px, 120px) 1fr 86px; font: 500 12px var(--font-num); color: var(--ink); }
+.meter > span:first-child { font: 600 10.5px var(--font-head); letter-spacing: .16em; text-transform: uppercase; }
+.meter > span:last-child { text-align: right; padding: 4px 6px; background: #0d0d0c; color: #efeadb; border-radius: 2px; box-shadow: inset 0 2px 4px #000, 0 1px 0 rgba(255, 255, 255, .5); }
+.meter .track, .bar {
+  height: 30px; border-radius: 3px; overflow: hidden; position: relative; border: 2px solid #57565a;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .12), transparent 40%), linear-gradient(180deg, #3a4046, #161b20 48%, #242a30);
+  box-shadow: inset 0 0 10px #000, 0 1px 0 rgba(255, 255, 255, .55);
+}
+.meter .track::before { content: ""; position: absolute; left: 8px; right: 8px; top: 8px; height: 12px;
+                        background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 10%); opacity: .8; }
+.meter .track::after { content: ""; position: absolute; left: 8px; right: 8px; top: 15px; height: 2px;
+                       background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 6px); opacity: .75; }
+.meter .fill { position: relative; height: 100%; background: none !important; box-shadow: none !important; }
+.meter .fill::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(#ff7a4a, var(--red)); box-shadow: 0 0 8px var(--red-glow); }
+.meter .fill.hot::after { background: linear-gradient(#ffd27a, #ff9a1f); box-shadow: 0 0 9px rgba(255, 170, 40, .9); }
+.meter .fill.clip::after { background: #fff; box-shadow: 0 0 12px 2px #ff3b1f; }
+.bar > div { background: linear-gradient(90deg, #a92a0b, var(--red)); box-shadow: 0 0 8px var(--red-glow); }
+
+.dot { width: 14px; height: 14px; background: #4a4a46; box-shadow: inset 0 0 0 1px #000; }
+.dot.ok { background: radial-gradient(circle at 35% 30%, #efffb0, #8fcf3a 55%, #4f8a1a); box-shadow: 0 0 9px 2px rgba(150, 215, 60, .55); }
+.dot.warn { background: radial-gradient(circle at 35% 30%, #fff1b8, #ffab2e 55%, #ff7a1a); box-shadow: 0 0 9px 2px rgba(255, 150, 30, .6); }
+.dot.bad { background: radial-gradient(circle at 35% 30%, #ffc0a8, #ff4a2a 55%, #a3200a); box-shadow: 0 0 9px 2px rgba(255, 70, 40, .6); }
+
+/* ------------------------------------------------------------------ knurled gold knobs with a dished grey cap */
+.knob-group { margin: 12px 0 8px; }
+.knob-title { font: 700 12px var(--font-head); letter-spacing: .24em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid rgba(0, 0, 0, .35); padding-bottom: 5px; margin-bottom: 14px; }
+.knobs { display: flex; flex-wrap: wrap; gap: 8px 30px; }
+.knob-field { display: flex; flex-direction: column; align-items: center; width: 104px; }
+.knob-field label { text-align: center; margin: 0 0 12px; min-height: 2.6em; display: flex; align-items: flex-end; justify-content: center; }
+.knob {
+  position: relative; width: 74px; height: 74px; border-radius: 50%; cursor: ns-resize; touch-action: none; border: 0; padding: 0; outline-offset: 6px;
+  text-shadow: none; transition: none;
+  background: repeating-conic-gradient(from 0deg, #f4e3a4 0 4deg, #a4863f 4deg 8deg);          /* the knurled ring */
+  box-shadow: 0 6px 11px rgba(0, 0, 0, .6), inset 0 0 0 2px rgba(60, 40, 10, .7);
+}
+.knob:active:not(.disabled) { transform: none; box-shadow: 0 6px 11px rgba(0, 0, 0, .6), inset 0 0 0 2px rgba(60, 40, 10, .7); cursor: grabbing; }
+.knob::before {                        /* the printed scale: 270 degrees of ticks around the knob */
+  content: ""; position: absolute; inset: -14px; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(from -135deg, rgba(29, 29, 28, .85) 0 1.2deg, transparent 1.2deg 27deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 65%, #000 66% 100%), conic-gradient(from -135deg, #000 0 270deg, transparent 270deg);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+  mask: radial-gradient(circle, transparent 0 65%, #000 66% 100%), conic-gradient(from -135deg, #000 0 270deg, transparent 270deg);
+}
+.knob-cap {                            /* the cap: flat grey disc set into the ring, it carries the pointer and turns */
+  position: absolute; inset: 9px; border-radius: 50%; display: block; transition: transform .04s linear;
+  background: radial-gradient(circle at 50% 50%, #8a8a84, #7b7b75);
+  box-shadow: 0 0 0 2px #2b2a27, 0 1px 0 2px rgba(255, 255, 255, .25);            /* the thin dark groove round the cap */
+}
+.knob-cap::after { content: ""; position: absolute; top: 4px; left: 50%; width: 3px; height: 13px; margin-left: -1.5px; border-radius: 1px; background: #f6f4ea; box-shadow: 0 0 2px rgba(0, 0, 0, .7); }
+.knob::after {                         /* the dish: light stays fixed while the cap turns - shadow along the top-left rim, glint bottom-right */
+  content: ""; position: absolute; inset: 9px; border-radius: 50%; pointer-events: none;
+  box-shadow: inset 4px 6px 9px rgba(0, 0, 0, .55), inset -3px -4px 6px rgba(255, 255, 255, .22);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, .10) 0 38%, transparent 39% 100%);
+}
+.knob:hover:not(.disabled) { filter: brightness(1.06); }
+.knob.disabled { opacity: .45; cursor: not-allowed; filter: saturate(.4); }
+.knob-num::-webkit-inner-spin-button, .knob-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.knob-num { width: 84px; margin-top: 14px; padding: 5px 4px; font-size: 13px; background: #0d0d0c; color: #efeadb; }
+.lang-knob { width: 70px; height: 70px; cursor: pointer; }
+.lang-knob::before { display: none; }
+
+/* slide faders (the EQ): scale printed on a black strip */
+.sliders { display: flex; gap: 48px; justify-content: center; flex-wrap: wrap; padding: 16px 26px 14px; border-radius: 3px;
+           background: linear-gradient(180deg, var(--strip1), var(--strip2)); box-shadow: inset 0 3px 8px #000, inset 0 0 0 1px #2c2c2a, 0 1px 0 rgba(255, 255, 255, .55); }
+.sl-field { width: 190px; display: flex; flex-direction: column; align-items: center; }
+.sl-scale { width: 100%; display: flex; justify-content: space-between; font: 500 11px var(--font-num); color: var(--paper); padding: 0 2px; }
+.sl-ruler { width: 100%; height: 9px; margin: 3px 0 10px; background: repeating-linear-gradient(90deg, var(--paper) 0 1px, transparent 1px 15px); opacity: .85; }
+.slot { position: relative; width: 100%; height: 10px; border-radius: 5px; background: #000; cursor: ew-resize; touch-action: none; box-shadow: inset 0 1px 3px #000, 0 1px 0 rgba(255, 255, 255, .12); }
+.cap-s { position: absolute; top: -13px; width: 26px; height: 36px; border-radius: 2px; pointer-events: none;
+         background: linear-gradient(90deg, #77776f, #d3d3cc 40%, #8b8b84); box-shadow: 0 3px 5px rgba(0, 0, 0, .7), inset 0 0 0 1px #3e3e3a; }
+.cap-s::after { content: ""; position: absolute; left: 12px; top: 4px; bottom: 4px; width: 2px; background: #2b2b28; }
+.sl-field label.sl-name { margin: 26px 0 8px; color: var(--paper); }
+.sl-field .knob-num { margin-top: 0; }
+
+/* ------------------------------------------------------------------ scrollbars */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: #cdb58f; }
+::-webkit-scrollbar-thumb { background: linear-gradient(90deg, var(--g3), var(--g1)); border-radius: 6px; border: 2px solid #cdb58f; }
+
+@media (max-width: 760px) {
+  header { grid-template-columns: 1fr auto; } .dial { display: none; }
+  .card { padding: 20px 16px 18px; }
+}

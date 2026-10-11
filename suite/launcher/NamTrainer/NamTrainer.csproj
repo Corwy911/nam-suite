@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- NAM Trainer: the program that keeps the trainer's server running in the background and shows an icon in the notification area
+       (Windows) / the menu bar (macOS). One code base for both systems; the few system-specific parts are in Platform.cs.
+       Build: suite/build.py (dotnet publish, self-contained single file). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>NamTrainer</AssemblyName>
+    <RootNamespace>NamSuite</RootNamespace>
+    <ApplicationIcon>..\..\assets\nam-trainer.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.*" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.*" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.*" />
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+</Project>

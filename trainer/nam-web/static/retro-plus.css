@@ -1,0 +1,348 @@
+/* Skin overlay: the SAME Kantata-205 machine, shot with a longer lens. Loaded after retro.css, it adds
+   nothing new to the design language - only depth and machining: layered shadows (contact + drop + ambient),
+   screws with slots on all four corners, engraved grooves instead of flat hairlines, glass reflections on
+   every window, a pinstripe outside the champagne edge. Palette, fonts, spacing and layout are untouched:
+   every rule here only thickens what retro.css already drew. Drop this file in next to retro.css and link
+   it after - that is the whole install. */
+
+/* ------------------------------------------------------------------ the room: deeper air around the parquet */
+body {
+  background:
+    linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
+    radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
+    radial-gradient(ellipse 130% 100% at 50% 38%, transparent 52%, rgba(58, 34, 9, .26) 96%),
+    url("/parquet.svg") 0 0 / 480px 360px,
+    #dcc49d;
+  background-attachment: fixed;
+}
+
+/* ------------------------------------------------------------------ the grey units: machined edge + four screws + layered shadow */
+header, .card, .tube-panel {
+  background:
+    linear-gradient(transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    linear-gradient(90deg, transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .055) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, var(--g1), var(--g2) 50%, var(--g3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75),
+              inset 0 0 0 2px var(--champagne),
+              inset 0 0 0 3px rgba(0, 0, 0, .22),            /* pinstripe turned just outside the champagne */
+              inset 0 -4px 0 rgba(0, 0, 0, .3),
+              inset 0 -14px 18px -12px rgba(0, 0, 0, .38),   /* soft shading inside the bottom gap */
+              0 2px 3px rgba(40, 22, 5, .35),                /* contact with the parquet */
+              0 14px 26px rgba(60, 35, 10, .42),
+              0 28px 46px -14px rgba(50, 28, 8, .34);        /* wide ambient bounce */
+}
+/* the top corner screws gain a slot and a light bite */
+.card::before, .card::after, header::before, header::after, .tube-panel::before, .tube-panel::after {
+  background: linear-gradient(0deg, transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px),
+              radial-gradient(circle at 35% 30%, #f4f3ee 0 14%, #c4c3be 40%, #6f6e6a 72%, #3c3b38 100%);
+  box-shadow: inset 0 0 0 1px #262523, 0 1px 1px rgba(255, 255, 255, .45);
+}
+
+/* ------------------------------------------------------------------ header dial: a deeper bezel, a hotter needle */
+.dial {
+  border-color: #45444a;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8), inset 0 0 14px #000, inset 0 0 0 1px rgba(0, 0, 0, .7),
+              0 0 0 2px #6a6965, 0 0 0 3px rgba(0, 0, 0, .5),
+              0 3px 8px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .55);
+}
+.dial .needle { box-shadow: 0 0 4px var(--red-glow), 0 0 14px var(--red-glow), 0 0 3px #fff inset; }
+
+/* ------------------------------------------------------------------ topbar: brushed gold chip, paper tags with fibre */
+.topbar select {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, .85), inset 0 -1px 0 rgba(255, 255, 255, .07), 0 1px 0 rgba(255, 255, 255, .4);
+}
+.lan, .notice, .banner {
+  background:
+    repeating-linear-gradient(90deg, rgba(120, 95, 45, .055) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(0deg, rgba(120, 95, 45, .045) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #f0e6c6, #e2d6ae);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 6px 12px -5px rgba(0, 0, 0, .45),
+              inset 0 0 0 3px rgba(139, 122, 68, .12), inset 0 1px 0 rgba(255, 255, 255, .65), inset 0 -1px 0 rgba(120, 95, 45, .3);
+}
+.gpu {
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 3px),
+              linear-gradient(180deg, #f4e3a4, #c9a75c 55%, #96772f);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 5px 10px -4px rgba(0, 0, 0, .45),
+              inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(90, 60, 10, .5), inset 0 0 0 1px rgba(109, 86, 32, .55);
+}
+
+/* ------------------------------------------------------------------ black strips: sunk deeper, bottom rim catches the light */
+.grid, .field, .field-inline, .upd-box {
+  box-shadow: inset 0 4px 9px rgba(0, 0, 0, .9), inset 0 0 0 1px #2c2c2a, inset 0 -1px 0 rgba(255, 255, 255, .08),
+              0 2px 4px rgba(0, 0, 0, .35), 0 1px 0 rgba(255, 255, 255, .55);
+}
+.upd-box { box-shadow: inset 0 4px 9px rgba(0, 0, 0, .9), inset 0 0 0 1px #2c2c2a, inset 0 -1px 0 rgba(255, 255, 255, .08), 0 2px 4px rgba(0, 0, 0, .35); }
+
+/* ------------------------------------------------------------------ dark windows: glass with a floor reflection */
+input[type=text], input[type=number], select {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, .85), inset 0 -1px 0 rgba(255, 255, 255, .07), inset 0 0 0 1px rgba(0, 0, 0, .55),
+              0 1px 0 rgba(255, 255, 255, .4), 0 2px 4px rgba(0, 0, 0, .25);
+}
+input:focus, select:focus { box-shadow: inset 0 3px 6px rgba(0, 0, 0, .85), inset 0 0 0 1px rgba(227, 68, 29, .45), 0 1px 0 rgba(255, 255, 255, .4); }
+
+/* the drop zone becomes a recessed tray, dashed in champagne */
+.drop { border: 1.5px dashed rgba(200, 168, 98, .65); border-radius: 4px; background: rgba(0, 0, 0, .28);
+        box-shadow: inset 0 2px 7px rgba(0, 0, 0, .55); transition: border-color .15s, background .15s, box-shadow .15s; }
+.drop:hover, .drop.over { border-color: rgba(240, 210, 140, 1); background: rgba(227, 68, 29, .1);
+        box-shadow: inset 0 2px 7px rgba(0, 0, 0, .55), inset 0 0 12px rgba(227, 68, 29, .18); }
+
+/* file rows: engraved separators on the black strip */
+.files li { border-bottom-color: rgba(0, 0, 0, .5); box-shadow: 0 1px 0 rgba(255, 255, 255, .055); }
+.files li:hover { background: rgba(255, 255, 255, .035); }
+.tag { background: linear-gradient(180deg, #1c1c1a, #121211); color: var(--paper-dim); border: 1px solid #34332f; border-radius: 2px;
+       font: 600 10px var(--font-head); letter-spacing: .08em; text-transform: uppercase; box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255, 255, 255, .06); }
+.tag.lib { color: #e8c87e; border-color: #4a3a1c; background: linear-gradient(180deg, #241c0f, #171109); }
+
+/* ------------------------------------------------------------------ keys: taller travel, side bevels, a lift on hover */
+button, a.btn {
+  box-shadow: 0 5px 0 var(--key-edge), 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+button:hover:not(:disabled), a.btn:hover {
+  transform: translateY(-1px); filter: brightness(1.07);
+  box-shadow: 0 6px 0 var(--key-edge), 0 9px 12px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+button:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--key-edge), 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35);
+}
+button.primary {
+  box-shadow: 0 5px 0 var(--gold3), 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(90, 60, 10, .3),
+              inset 1px 0 0 rgba(255, 255, 255, .3), inset -1px 0 0 rgba(90, 60, 10, .2);
+}
+button.primary:hover:not(:disabled) {
+  box-shadow: 0 6px 0 var(--gold3), 0 9px 12px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(90, 60, 10, .3),
+              inset 1px 0 0 rgba(255, 255, 255, .3), inset -1px 0 0 rgba(90, 60, 10, .2);
+}
+button.primary:active:not(:disabled) { box-shadow: 0 1px 0 var(--gold3), 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35); }
+button.danger {
+  box-shadow: 0 5px 0 #6d1a05, 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -2px 3px rgba(80, 15, 3, .45),
+              inset 1px 0 0 rgba(255, 255, 255, .18), inset -1px 0 0 rgba(80, 15, 3, .25);
+}
+button.danger:active:not(:disabled) { box-shadow: 0 1px 0 #6d1a05, 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35); }
+button:disabled { box-shadow: 0 1px 0 var(--key-edge), inset 0 1px 0 rgba(255, 255, 255, .35); }
+
+input[type=checkbox] {
+  box-shadow: 0 4px 0 var(--key-edge), 0 7px 8px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+input[type=checkbox]:hover:not(:disabled) { filter: brightness(1.05); }
+input[type=checkbox]:checked { box-shadow: 0 1px 0 var(--key-edge), 0 2px 3px rgba(0, 0, 0, .35), inset 0 2px 5px rgba(0, 0, 0, .38); }
+input[type=checkbox]:checked::after { box-shadow: 0 0 9px 2px var(--red-glow), 0 0 2px 1px rgba(255, 150, 90, .5); }
+
+/* ------------------------------------------------------------------ badges, dots, progress: instrument readouts */
+.badge { border-radius: 2px; font: 700 10px var(--font-head); letter-spacing: .12em; text-transform: uppercase; padding: 2px 9px;
+         box-shadow: inset 0 1px 3px rgba(0, 0, 0, .75), 0 1px 0 rgba(255, 255, 255, .25); }
+.badge.running { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .75), 0 1px 0 rgba(255, 255, 255, .25), 0 0 10px var(--red-glow); }
+.dot.ok, .dot.warn, .dot.bad { box-shadow: 0 0 0 1px rgba(0, 0, 0, .45), 0 1px 1px rgba(0, 0, 0, .4), inset 0 -1px 1px rgba(0, 0, 0, .35); }
+.bar { box-shadow: inset 0 2px 5px #000, inset 0 0 0 1px rgba(0, 0, 0, .8), 0 1px 0 rgba(255, 255, 255, .3); }
+.bar > div { background: linear-gradient(180deg, #ff8a55, #d63b13 55%, #a92a0b);
+             box-shadow: 0 0 10px var(--red-glow), inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(90, 15, 3, .6); }
+
+/* ------------------------------------------------------------------ engraved grooves between jobs / updates */
+.job { border-top-color: rgba(0, 0, 0, .4); }
+.job + .job, .upd + .upd {
+  background-image: linear-gradient(rgba(255, 255, 255, .24), rgba(255, 255, 255, .24));
+  background-position: 0 1px; background-size: 100% 1px; background-repeat: no-repeat;
+}
+.upd { border-top-color: rgba(0, 0, 0, .4); }
+.job-name { text-shadow: 0 1px 0 rgba(255, 255, 255, .3); }
+.stats span { font-family: var(--font-num); font-size: 12.5px; letter-spacing: .02em; color: var(--ink-soft); }
+.stats .esr-great { color: var(--ok); } .stats .esr-ok { color: var(--warn); } .stats .esr-bad { color: var(--bad); }
+
+/* the failure strip: a red lamp in a dark well */
+.job .error, .upload-status.error {
+  background: linear-gradient(180deg, rgba(109, 26, 5, .14), rgba(109, 26, 5, .07));
+  border: 1px solid rgba(109, 26, 5, .4); border-left: 4px solid var(--red); border-radius: 3px;
+  padding: 8px 12px; text-shadow: 0 1px 0 rgba(255, 255, 255, .3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .18), 0 1px 0 rgba(255, 255, 255, .3);
+}
+
+/* summaries get a gold chevron that folds open */
+summary { position: relative; padding-left: 17px; }
+summary::before { content: ""; position: absolute; left: 3px; top: 7px; width: 7px; height: 7px;
+                  border-right: 2px solid #d9b96a; border-top: 2px solid #d9b96a;
+                  transform: rotate(45deg); transition: transform .15s;
+                  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); }
+details[open] > summary::before { transform: rotate(135deg); }
+
+/* ------------------------------------------------------------------ phosphor terminals and the plot: deeper wells */
+pre.log, pre.notes {
+  box-shadow: inset 0 0 18px #000, inset 0 0 0 1px #0a1f13, inset 0 0 0 3px rgba(0, 0, 0, .55), inset 0 2px 5px rgba(0, 0, 0, .8),
+              0 3px 8px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .3);
+  background-image: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, .18) 2px 4px),
+                    radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0, 0, 0, .5));
+}
+.plot { box-shadow: inset 0 0 14px #000, inset 0 0 0 1px rgba(0, 0, 0, .6), 0 0 0 1px #3b3a37, 0 5px 12px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .35); }
+.flags { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .18), 0 1px 0 rgba(255, 255, 255, .25); }
+.filelist { border-left: 2px solid rgba(184, 154, 82, .35); padding-left: 10px; }
+
+/* ------------------------------------------------------------------ the training engine: the radio, polished */
+.tube-plate-state { position: relative; padding-left: 15px; }
+.tube-plate-state::before {                                     /* a pilot lamp beside the state text */
+  content: ""; position: absolute; left: 0; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #55534e, #2c2b28 72%);
+  box-shadow: inset 0 0 0 1px #000, inset 0 1px 1px rgba(255, 255, 255, .15), 0 1px 0 rgba(255, 255, 255, .3);
+}
+.tube-panel.busy .tube-plate-state::before {
+  background: radial-gradient(circle at 35% 30%, #ffd0a0, var(--red) 55%, #8f200b);
+  box-shadow: 0 0 9px 2px var(--red-glow), inset 0 0 0 1px rgba(88, 21, 10, .8);
+}
+
+.cabinet {
+  background:
+    linear-gradient(100deg, transparent 18%, rgba(255, 215, 170, .09) 30%, rgba(255, 215, 170, .02) 46%, transparent 58%),
+    repeating-linear-gradient(91deg, rgba(0, 0, 0, .10) 0 2px, transparent 2px 7px, rgba(255, 215, 170, .05) 7px 8px, transparent 8px 15px),
+    repeating-radial-gradient(ellipse 160% 36% at 28% 115%, rgba(0, 0, 0, .10) 0 3px, transparent 3px 10px),
+    repeating-radial-gradient(ellipse 140% 30% at 80% -20%, rgba(255, 200, 150, .05) 0 2px, transparent 2px 12px),
+    linear-gradient(180deg, #7d4727, #5c3119 58%, #3e1f0d);
+  box-shadow: inset 0 2px 0 rgba(255, 210, 170, .4), inset 0 0 0 1px rgba(0, 0, 0, .45), inset 0 -4px 8px rgba(0, 0, 0, .45),
+              inset 0 16px 26px -16px rgba(255, 190, 140, .2), inset 0 -18px 26px -18px rgba(0, 0, 0, .55),
+              0 3px 6px rgba(0, 0, 0, .5), 0 16px 24px rgba(0, 0, 0, .55), 0 32px 44px -16px rgba(0, 0, 0, .45);
+}
+
+.r-window {
+  box-shadow: inset 0 3px 12px #000, inset 0 -6px 14px rgba(0, 0, 0, .7),
+              0 0 0 3px #c9a45a, 0 0 0 4px #5a3d12, 0 0 0 5px rgba(255, 220, 160, .18), 0 0 0 6px rgba(0, 0, 0, .35),
+              0 6px 14px rgba(0, 0, 0, .5);
+}
+.busy .r-window::before { animation: tube-breathe 3.4s ease-in-out infinite; }
+@keyframes tube-breathe { 50% { opacity: .82; } }
+.r-chassis {
+  background:
+    radial-gradient(circle at 35% 30%, #d8d7d2 0 22%, #8f8e89 55%, #4a4945 100%) 6px 4px / 5px 5px no-repeat,
+    radial-gradient(circle at 35% 30%, #d8d7d2 0 22%, #8f8e89 55%, #4a4945 100%) calc(100% - 11px) 4px / 5px 5px no-repeat,
+    linear-gradient(180deg, #7b7b76, #3b3b38 60%, #232321);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 -1px 3px rgba(0, 0, 0, .5);
+}
+
+/* nixies: warmer glass, top halo when lit */
+.nx-glass {
+  background: linear-gradient(90deg, rgba(0, 0, 0, .6), rgba(40, 30, 22, .2) 22%, rgba(40, 30, 22, .12) 62%, rgba(0, 0, 0, .65)),
+              linear-gradient(115deg, transparent 60%, rgba(255, 255, 255, .07) 74%, transparent 82%),
+              radial-gradient(ellipse at 50% 42%, #2a1c12, #0d0805 76%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 0 14px rgba(0, 0, 0, .8), inset 0 -6px 10px rgba(0, 0, 0, .6),
+              0 3px 6px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .12);
+}
+.nx-glass::before {                                              /* the anode halo, off until the tube is lit */
+  content: ""; position: absolute; left: 18%; right: 18%; top: 5px; height: 36px; border-radius: 50%; z-index: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 150, 60, .55), transparent 70%);
+  opacity: 0; transition: opacity .8s;
+}
+.nixie.lit .nx-glass::before { opacity: 1; }
+.nixie .nx-digits span.on {
+  text-shadow: 0 0 3px #ff8a2a, 0 0 9px #ff6a00, 0 0 18px rgba(255, 90, 0, .75), 0 0 34px rgba(255, 80, 0, .4), 0 0 60px rgba(255, 70, 0, .22);
+}
+.nixie.lit .nx-base { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -2px 3px #000, 0 1px 2px rgba(0, 0, 0, .6),
+                      0 0 10px rgba(255, 110, 20, .3); }
+
+/* the tuning scale: end lamps, deeper bezel, hotter glow */
+.r-dial {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, .5), inset 0 -3px 5px rgba(0, 0, 0, .35), 0 0 0 2px #b8913f, 0 0 0 3px #4a3210,
+              0 0 0 4px rgba(0, 0, 0, .3), 0 3px 7px rgba(0, 0, 0, .45);
+  background:
+    radial-gradient(circle at 50% 50%, #ff5a30 0 26%, #8f200b 55%, rgba(0, 0, 0, .3) 100%) 4px 50% / 5px 5px no-repeat,
+    radial-gradient(circle at 50% 50%, #ff5a30 0 26%, #8f200b 55%, rgba(0, 0, 0, .3) 100%) calc(100% - 4px) 50% / 5px 5px no-repeat,
+    linear-gradient(180deg, #e9dcb4, #d8c793);
+}
+.busy .r-dial { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .35), 0 0 0 2px #b8913f, 0 0 0 3px #4a3210, 0 0 0 4px rgba(0, 0, 0, .3),
+                              0 0 18px rgba(255, 190, 90, .5), 0 3px 7px rgba(0, 0, 0, .45); }
+.r-dial .nums span { text-shadow: 0 1px 0 rgba(255, 252, 235, .7); }
+.r-dial .ticks { filter: drop-shadow(0 1px 0 rgba(255, 252, 235, .7)); }
+.r-dial .foot span { color: #4a3416; text-shadow: 0 1px 0 rgba(255, 252, 235, .5); }
+.r-dial .ndl { background: linear-gradient(180deg, #ff7a50, #c21d0c);
+               box-shadow: 0 0 4px rgba(194, 29, 12, .8), 0 0 12px rgba(194, 29, 12, .55), 1px 0 0 rgba(255, 255, 255, .25); }
+
+/* knobs, speaker cloth, brass console */
+.r-knob {
+  background:
+    radial-gradient(circle at 42% 34%, rgba(255, 232, 195, .6) 0 7%, rgba(255, 232, 195, .2) 26%, transparent 46%),
+    radial-gradient(circle at 50% 44%, #7c4826 0 24%, #5e3319 42%, #44260e 55%, transparent 59%),
+    repeating-conic-gradient(#2f190b 0 7deg, #5a341c 7deg 14deg);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, .55), 0 10px 16px rgba(0, 0, 0, .7), 0 1px 2px rgba(0, 0, 0, .5),
+              inset 0 0 0 1px rgba(0, 0, 0, .7), inset 0 4px 6px rgba(255, 220, 180, .25), inset 0 -6px 8px rgba(0, 0, 0, .65);
+}
+.r-knob::before {                                               /* a bright fleck sliding across the dome */
+  content: ""; position: absolute; left: 25%; top: 15%; width: 26%; height: 13%; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 246, 224, .85), transparent 70%); transform: rotate(-30deg);
+}
+.r-knob::after { background: linear-gradient(#fdf3d2, #d9bd7d); width: 4px; height: 14px; margin-left: -2px;
+                 box-shadow: 0 0 2px rgba(0, 0, 0, .8), 0 1px 0 rgba(255, 255, 255, .4); }
+.r-cloth {
+  background:
+    repeating-linear-gradient(45deg, rgba(52, 33, 10, .55) 0 1px, transparent 1px 2.5px),
+    repeating-linear-gradient(-45deg, rgba(52, 33, 10, .55) 0 1px, transparent 1px 2.5px),
+    linear-gradient(120deg, rgba(255, 255, 255, .16), transparent 42%, rgba(0, 0, 0, .26)),
+    linear-gradient(180deg, #dcc48d, #b99b5f);
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, .68), inset 0 -3px 6px rgba(0, 0, 0, .45), inset 0 0 22px rgba(0, 0, 0, .25),
+              0 0 0 2px #3d1f0d, 0 4px 8px rgba(0, 0, 0, .4);
+}
+.r-screen {
+  background:
+    radial-gradient(circle at 35% 30%, #e6e2d6 0 20%, #9a9892 55%, #4f4e4a 100%) 3px 3px / 5px 5px no-repeat,
+    radial-gradient(circle at 35% 30%, #e6e2d6 0 20%, #9a9892 55%, #4f4e4a 100%) calc(100% - 8px) 3px / 5px 5px no-repeat,
+    radial-gradient(circle at 35% 30%, #e6e2d6 0 20%, #9a9892 55%, #4f4e4a 100%) 3px calc(100% - 8px) / 5px 5px no-repeat,
+    radial-gradient(circle at 35% 30%, #e6e2d6 0 20%, #9a9892 55%, #4f4e4a 100%) calc(100% - 8px) calc(100% - 8px) / 5px 5px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 3px), linear-gradient(180deg, #f2d98e, #c9a44f 50%, #8c6a26);
+  box-shadow: 0 0 0 1px #4a3210, 0 6px 12px rgba(0, 0, 0, .6), 0 3px 5px rgba(0, 0, 0, .45),
+              inset 0 2px 3px rgba(255, 255, 255, .5), inset 0 -3px 4px rgba(0, 0, 0, .35),
+              inset 0 0 0 2px rgba(74, 50, 16, .28), inset 0 0 0 3px rgba(255, 235, 180, .18);
+}
+.crt {
+  box-shadow: inset 0 0 0 2px #0a0c0b, inset 0 3px 8px rgba(0, 0, 0, .9), inset 0 0 24px rgba(0, 0, 0, .95), inset 0 -8px 16px rgba(0, 0, 0, .8);
+}
+.crt::after {
+  background: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, .28) 2px 3px),
+              radial-gradient(ellipse 120% 90% at 50% 50%, transparent 60%, rgba(0, 0, 0, .45)),
+              radial-gradient(ellipse 130% 60% at 50% -18%, rgba(160, 255, 190, .1), transparent 55%),
+              linear-gradient(160deg, rgba(255, 255, 255, .12), transparent 34%);
+}
+.busy .crt { box-shadow: inset 0 0 0 2px #0a0c0b, inset 0 3px 8px rgba(0, 0, 0, .9), inset 0 0 24px rgba(0, 0, 0, .95), 0 0 22px rgba(72, 255, 138, .16); }
+.busy .r-screen { box-shadow: 0 0 0 1px #4a3210, 0 6px 12px rgba(0, 0, 0, .6), 0 3px 5px rgba(0, 0, 0, .45),
+                              inset 0 2px 3px rgba(255, 255, 255, .5), inset 0 -3px 4px rgba(0, 0, 0, .35),
+                              inset 0 0 0 2px rgba(74, 50, 16, .28), inset 0 0 14px rgba(72, 255, 138, .14); }
+
+/* the magic eye: a chrome bezel with a specular, glass on the eye */
+.eye-bezel { position: relative;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .65), 0 3px 5px rgba(0, 0, 0, .55), 0 1px 2px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .35),
+              inset 0 0 0 1px rgba(0, 0, 0, .35), inset 0 3px 5px rgba(0, 0, 0, .4), inset 0 -3px 4px rgba(255, 255, 255, .28); }
+.eye-bezel::after { content: ""; position: absolute; left: 20%; top: 13%; width: 26%; height: 14%; border-radius: 50%;
+                    background: radial-gradient(ellipse, rgba(255, 255, 255, .85), transparent 68%); transform: rotate(-26deg); }
+.eye { position: relative;
+  box-shadow: inset 0 0 8px #000, inset 0 3px 5px rgba(0, 0, 0, .85), inset 0 -2px 4px rgba(120, 200, 150, .14),
+              inset 0 0 4px rgba(170, 255, 205, .1), 0 0 0 2px #141414, 0 0 0 3px rgba(255, 255, 255, .16); }
+.eye::after { content: ""; position: absolute; left: 20%; top: 14%; width: 26%; height: 15%; border-radius: 50%;
+              background: radial-gradient(ellipse, rgba(255, 255, 255, .9) 0 28%, rgba(235, 255, 245, .4) 55%, transparent 75%);
+              transform: rotate(-22deg); }
+.busy .eye { filter: drop-shadow(0 0 10px rgba(82, 255, 149, .8)); }
+
+/* the piano keys: taller, curved ivory, a real shadow onto the cabinet */
+.r-keys span {
+  background: radial-gradient(ellipse 90% 70% at 32% 8%, rgba(255, 255, 255, .34), transparent 55%),
+              linear-gradient(180deg, #f1ead0, #d2c9a6 55%, #aba27f);
+  box-shadow: 0 5px 0 #5c5540, 0 3px 4px rgba(0, 0, 0, .5), 0 9px 12px rgba(0, 0, 0, .5),
+              inset 0 1px 0 rgba(255, 255, 255, .75), inset 0 -3px 4px rgba(0, 0, 0, .14),
+              inset 1px 0 0 rgba(255, 255, 255, .25), inset -1px 0 0 rgba(0, 0, 0, .12);
+}
+.r-keys span.down, .busy .r-keys span.nam {
+  box-shadow: 0 1px 0 #5c5540, 0 3px 5px rgba(0, 0, 0, .45), inset 0 2px 5px rgba(0, 0, 0, .3);
+  background: radial-gradient(ellipse 90% 70% at 32% 8%, rgba(255, 255, 255, .14), transparent 55%),
+              linear-gradient(180deg, #d9d1b2, #bdb492);
+}
+
+/* ------------------------------------------------------------------ scrollbars: a groove in the parquet */
+::-webkit-scrollbar-track { background: #c4ab84; box-shadow: inset 0 0 5px rgba(0, 0, 0, .35); }
+::-webkit-scrollbar-thumb { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -1px 2px rgba(0, 0, 0, .4), 0 0 0 1px rgba(0, 0, 0, .28); }
+::-webkit-scrollbar-thumb:hover { filter: brightness(1.12); }

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plain Win32 + WebView2 shell (not WinUI3/XAML - see README-DECISION.md in this folder for why: the WinUI3 XAML
+  compiler pipeline (App.idl/MainWindow.idl -> MIDL -> XamlCompiler -> generated C++/WinRT headers) needs to be
+  wired up by hand here, with no IDE to catch mistakes as it's authored, and the risk of shipping an unverified,
+  possibly-broken build outweighed the visual-chrome benefit for a first working port. This project is fully built
+  and its window/WebView2/menu/dialogs verified against real output, not guessed at.
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9E5A7B1A-6C2E-4B9A-8B0A-8E2C4B9D3F11}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>NamCaptureApp</RootNamespace>
+    <ProjectName>NamCaptureApp</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <!-- NAM_HAVE_ASIO_SDK: real ASIO support, verified against a Focusrite Scarlett 18i20 via
+           packaging\windows\build_controlserver_asio.bat - see AudioEngineWin.cpp's build-status comment. Falls
+           back to a harmless "SDK not available" stub if native\third_party\asio_sdk\ isn't present (see below). -->
+      <PreprocessorDefinitions Condition="Exists('$(ProjectDir)..\..\..\native\third_party\asio_sdk\common\asio.h')">NAM_HAVE_ASIO_SDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)..\..\..\native\engine;$(ProjectDir)..\..\..\native\third_party\asio_sdk\common;$(ProjectDir)..\..\..\native\third_party\asio_sdk\host;$(ProjectDir)..\..\..\native\third_party\asio_sdk\host\pc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;ole32.lib;advapi32.lib;user32.lib;$(ProjectDir)..\..\..\native\build\rtengine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <!-- Without this, NAM's architecture parsers (WaveNet, ConvNet, ...) get dead-stripped from rtengine.lib -
+           they self-register via static initializers with nothing else referencing their .obj directly - and
+           loading any real model fails with "No config parser registered for architecture: WaveNet". Found by
+           testing against a real .nam file, not by inspection: the native test suite only exercises a MISSING
+           model path. Same reason Mac's build_app.sh needs -force_load for the same library. -->
+      <AdditionalOptions>/WHOLEARCHIVE:"$(ProjectDir)..\..\..\native\build\rtengine.lib" %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PythonSidecar.cpp" />
+    <ClCompile Include="..\ControlServerWin.cpp" />
+    <ClCompile Include="..\AudioEngineWin.cpp" />
+    <!-- Vendored, unmodifiable SDK code (license forbids changing it - see native/third_party/ASIO_SDK_SETUP.md):
+         written for a plain ANSI build (narrow Reg*/Co* Win32 calls) against the ordinary (non-"lean") windows.h
+         that declares CoInitialize/CoCreateInstance/CLSCTX_INPROC_SERVER. This project's own UNICODE/_UNICODE/
+         WIN32_LEAN_AND_MEAN and SDLCheck (which promotes e.g. strcpy's C4996 to a hard error) break it, so these
+         three files get a from-scratch PreprocessorDefinitions (no %() - deliberately NOT inheriting the project
+         defaults above) instead of the usual per-file additions. -->
+    <ClCompile Include="..\..\..\native\third_party\asio_sdk\common\asio.cpp" Condition="Exists('$(ProjectDir)..\..\..\native\third_party\asio_sdk\common\asio.cpp')">
+      <PreprocessorDefinitions>_USE_MATH_DEFINES</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+    <ClCompile Include="..\..\..\native\third_party\asio_sdk\host\asiodrivers.cpp" Condition="Exists('$(ProjectDir)..\..\..\native\third_party\asio_sdk\host\asiodrivers.cpp')">
+      <PreprocessorDefinitions>_USE_MATH_DEFINES</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+    <ClCompile Include="..\..\..\native\third_party\asio_sdk\host\pc\asiolist.cpp" Condition="Exists('$(ProjectDir)..\..\..\native\third_party\asio_sdk\host\pc\asiolist.cpp')">
+      <PreprocessorDefinitions>_USE_MATH_DEFINES</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PythonSidecar.h" />
+    <ClInclude Include="..\ControlServerWin.h" />
+    <ClInclude Include="..\AudioEngineWin.h" />
+    <ClInclude Include="..\WavRead.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="app.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Web.WebView2.1.0.2957.106\build\native\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.2957.106\build\native\Microsoft.Web.WebView2.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>Manca il pacchetto NuGet Microsoft.Web.WebView2: esegui packaging\windows\tools\nuget.exe restore packaging\windows\NamCaptureApp\packages.config -PackagesDirectory packaging\windows\packages</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Web.WebView2.1.0.2957.106\build\native\Microsoft.Web.WebView2.targets')" Text="$(ErrorText)" />
+  </Target>
+</Project>

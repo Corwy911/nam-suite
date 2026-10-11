@@ -1,0 +1,20 @@
+# One rule for the whole repository: LF in the repository and on disk (also on Windows); only Windows scripts need CRLF.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.cs  text eol=lf
+*.sh text eol=lf
+*.command text eol=lf
+*.swift text eol=lf
+*.png binary
+*.icns binary
+*.ico binary
+*.pdf binary
+*.wav binary
+*.nam binary
+*.lib binary
+*.a binary
+*.dll binary
+*.exe binary
+*.bin binary

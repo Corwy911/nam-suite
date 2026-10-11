@@ -1,0 +1,220 @@
+/* Skin overlay for NAM Capture: the SAME Kantata-205 machine as the trainer's retro-plus.css, shot with a longer lens.
+   Loaded after retro.css, it adds only depth and machining: layered shadows (contact + drop + ambient), screws with
+   slots on all four corners, engraved grooves, glass reflections on the dark windows, deeper meter wells, a lit
+   needle, polished fader caps and gold knobs with a fixed-light dish. Palette, fonts, spacing and layout untouched.
+   Drop this file next to retro.css and link it after - that is the whole install. */
+
+/* ------------------------------------------------------------------ the room: deeper air around the parquet */
+body {
+  background:
+    linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
+    radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
+    radial-gradient(ellipse 130% 100% at 50% 38%, transparent 52%, rgba(58, 34, 9, .26) 96%),
+    url("/parquet.svg") 0 0 / 480px 360px,
+    #dcc49d;
+  background-attachment: fixed;
+}
+
+/* ------------------------------------------------------------------ the grey units: machined edge + four screws + layered shadow */
+header, .card {
+  background:
+    linear-gradient(transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    linear-gradient(90deg, transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .055) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, var(--g1), var(--g2) 50%, var(--g3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75),
+              inset 0 0 0 2px var(--champagne),
+              inset 0 0 0 3px rgba(0, 0, 0, .22),            /* pinstripe just outside the champagne */
+              inset 0 -4px 0 rgba(0, 0, 0, .3),
+              inset 0 -14px 18px -12px rgba(0, 0, 0, .38),
+              0 2px 3px rgba(40, 22, 5, .35),                /* contact with the parquet */
+              0 14px 26px rgba(60, 35, 10, .42),
+              0 28px 46px -14px rgba(50, 28, 8, .34);        /* wide ambient bounce */
+}
+/* the screws gain a slot and a light bite */
+.card::before, .card::after, header::before, header::after {
+  background: linear-gradient(0deg, transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px),
+              radial-gradient(circle at 35% 30%, #f4f3ee 0 14%, #c4c3be 40%, #6f6e6a 72%, #3c3b38 100%);
+  box-shadow: inset 0 0 0 1px #262523, 0 1px 1px rgba(255, 255, 255, .45);
+}
+
+/* the numbered step badge: a machined roundel */
+.step-num {
+  background: radial-gradient(circle at 35% 30%, #f0efe9 0 16%, #c4c3be 42%, #797874 72%, #474643 100%) !important;
+  box-shadow: inset 0 0 0 2px #37362f, inset 0 0 0 4px #b9b8b3, inset 0 2px 3px rgba(255, 255, 255, .5),
+              inset 0 -2px 3px rgba(0, 0, 0, .4), 0 2px 3px rgba(0, 0, 0, .45) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .4);
+}
+
+/* ------------------------------------------------------------------ header dial: deeper bezel, hotter needle */
+.dial {
+  border-color: #45444a;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8), inset 0 0 14px #000, inset 0 0 0 1px rgba(0, 0, 0, .7),
+              0 0 0 2px #6a6965, 0 0 0 3px rgba(0, 0, 0, .5),
+              0 3px 8px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .55);
+}
+.dial .needle { box-shadow: 0 0 4px var(--red-glow), 0 0 14px var(--red-glow), 0 0 3px #fff inset; }
+
+/* ------------------------------------------------------------------ paper tags: fibre texture + deeper cast */
+.notice, .banner {
+  background:
+    repeating-linear-gradient(90deg, rgba(120, 95, 45, .055) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(0deg, rgba(120, 95, 45, .045) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #f0e6c6, #e2d6ae);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 6px 12px -5px rgba(0, 0, 0, .45),
+              inset 0 0 0 3px rgba(139, 122, 68, .12), inset 0 1px 0 rgba(255, 255, 255, .65), inset 0 -1px 0 rgba(120, 95, 45, .3);
+}
+.banner.demo, .demo {
+  background: repeating-linear-gradient(90deg, rgba(140, 100, 30, .05) 0 1px, transparent 1px 4px),
+              linear-gradient(180deg, #f6d9a0, #e9be6c);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 6px 12px -5px rgba(0, 0, 0, .45),
+              inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(140, 100, 30, .4);
+}
+
+/* ------------------------------------------------------------------ black strips: sunk deeper, bottom rim catches the light */
+.card .row, .card > .field, .sliders {
+  box-shadow: inset 0 4px 9px rgba(0, 0, 0, .9), inset 0 0 0 1px #2c2c2a, inset 0 -1px 0 rgba(255, 255, 255, .08),
+              0 2px 4px rgba(0, 0, 0, .35), 0 1px 0 rgba(255, 255, 255, .55);
+}
+
+/* ------------------------------------------------------------------ dark windows: glass with a floor reflection */
+input[type=text], input[type=number], select, .live-picker-trigger, .knob-num {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, .85), inset 0 -1px 0 rgba(255, 255, 255, .07), inset 0 0 0 1px rgba(0, 0, 0, .55),
+              0 1px 0 rgba(255, 255, 255, .4), 0 2px 4px rgba(0, 0, 0, .25);
+}
+input:focus, select:focus { box-shadow: inset 0 3px 6px rgba(0, 0, 0, .85), inset 0 0 0 1px rgba(227, 68, 29, .45), 0 1px 0 rgba(255, 255, 255, .4); }
+.knob-num { box-shadow: inset 0 3px 6px rgba(0, 0, 0, .9), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 1px 0 rgba(255, 255, 255, .3); }
+
+/* error strips: a red lamp in a dark well */
+.upload-status.error {
+  background: linear-gradient(180deg, rgba(109, 26, 5, .14), rgba(109, 26, 5, .07));
+  border: 1px solid rgba(109, 26, 5, .4); border-left: 4px solid var(--red); border-radius: 3px;
+  padding: 8px 12px; text-shadow: 0 1px 0 rgba(255, 255, 255, .3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .18), 0 1px 0 rgba(255, 255, 255, .3);
+}
+
+/* ------------------------------------------------------------------ keys: taller travel, side bevels, a lift on hover
+   (.knob and .live-picker-trigger are buttons too: they keep their own shapes) */
+button:not(.knob):not(.live-picker-trigger) {
+  box-shadow: 0 5px 0 var(--key-edge), 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+button:not(.knob):not(.live-picker-trigger):hover:not(:disabled) {
+  transform: translateY(-1px); filter: brightness(1.07);
+  box-shadow: 0 6px 0 var(--key-edge), 0 9px 12px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+button:not(.knob):not(.live-picker-trigger):active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--key-edge), 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35);
+}
+button.primary:not(.knob):not(.live-picker-trigger) {
+  box-shadow: 0 5px 0 var(--gold3), 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(90, 60, 10, .3),
+              inset 1px 0 0 rgba(255, 255, 255, .3), inset -1px 0 0 rgba(90, 60, 10, .2);
+}
+button.primary:not(.knob):not(.live-picker-trigger):hover:not(:disabled) {
+  box-shadow: 0 6px 0 var(--gold3), 0 9px 12px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(90, 60, 10, .3),
+              inset 1px 0 0 rgba(255, 255, 255, .3), inset -1px 0 0 rgba(90, 60, 10, .2);
+}
+button.primary:not(.knob):not(.live-picker-trigger):active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--gold3), 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35);
+}
+#liveStop:not(.knob), #recStop:not(.knob), #resDiscard:not(.knob), button.danger:not(.knob):not(.live-picker-trigger) {
+  box-shadow: 0 5px 0 #6d1a05, 0 8px 10px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -2px 3px rgba(80, 15, 3, .45),
+              inset 1px 0 0 rgba(255, 255, 255, .18), inset -1px 0 0 rgba(80, 15, 3, .25);
+}
+#liveStop:not(.knob):active, #recStop:not(.knob):active, #resDiscard:not(.knob):active,
+button.danger:not(.knob):not(.live-picker-trigger):active:not(:disabled) {
+  box-shadow: 0 1px 0 #6d1a05, 0 2px 3px rgba(0, 0, 0, .4), inset 0 2px 5px rgba(0, 0, 0, .35);
+}
+button:not(.knob):not(.live-picker-trigger):disabled { box-shadow: 0 1px 0 var(--key-edge), inset 0 1px 0 rgba(255, 255, 255, .35); }
+
+/* keys and radio keys: same bevels as the buttons */
+input[type=checkbox], input[type=radio] {
+  box-shadow: 0 4px 0 var(--key-edge), 0 7px 8px rgba(0, 0, 0, .5), 0 2px 3px rgba(0, 0, 0, .4),
+              inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(0, 0, 0, .12),
+              inset 1px 0 0 rgba(255, 255, 255, .22), inset -1px 0 0 rgba(0, 0, 0, .14);
+}
+input[type=checkbox]:hover:not(:disabled), input[type=radio]:hover:not(:disabled) { filter: brightness(1.05); }
+input[type=checkbox]:checked, input[type=radio]:checked {
+  box-shadow: 0 1px 0 var(--key-edge), 0 2px 3px rgba(0, 0, 0, .35), inset 0 2px 5px rgba(0, 0, 0, .38);
+}
+input[type=checkbox]:checked::after { box-shadow: 0 0 9px 2px var(--red-glow), 0 0 2px 1px rgba(255, 150, 90, .5); }
+input[type=radio]:checked::after { box-shadow: 0 0 8px 2px var(--red-glow), 0 0 2px 1px rgba(255, 150, 90, .5); }
+
+/* ------------------------------------------------------------------ level windows: deeper wells, a lit needle */
+.meter > span:last-child { box-shadow: inset 0 3px 6px rgba(0, 0, 0, .9), inset 0 0 0 1px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .5); }
+.meter .track, .bar {
+  border-color: #45444a;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .85), inset 0 0 10px #000, inset 0 -6px 10px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(0, 0, 0, .7),
+              0 0 0 2px #6a6965, 0 0 0 3px rgba(0, 0, 0, .4),
+              0 3px 7px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .55);
+}
+.meter .fill::after { box-shadow: 0 0 5px var(--red-glow), 0 0 12px var(--red-glow); }
+.meter .fill.hot::after { box-shadow: 0 0 6px rgba(255, 170, 40, .9), 0 0 14px rgba(255, 170, 40, .55); }
+.meter .fill.clip::after { box-shadow: 0 0 8px 2px rgba(255, 60, 30, .8), 0 0 18px 4px rgba(255, 60, 30, .5); }
+.bar > div { background: linear-gradient(180deg, #ff8a55, #d63b13 55%, #a92a0b);
+             box-shadow: 0 0 10px var(--red-glow), inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(90, 15, 3, .6); }
+
+/* status lamps: a rim so they sit IN the panel */
+.dot { box-shadow: inset 0 0 0 1px #000, 0 0 0 1px rgba(0, 0, 0, .45), 0 1px 1px rgba(0, 0, 0, .4), inset 0 -1px 1px rgba(0, 0, 0, .35); }
+.dot.ok { box-shadow: 0 0 9px 2px rgba(150, 215, 60, .55), 0 0 0 1px rgba(0, 0, 0, .45), inset 0 -1px 1px rgba(0, 0, 0, .35); }
+.dot.warn { box-shadow: 0 0 9px 2px rgba(255, 150, 30, .6), 0 0 0 1px rgba(0, 0, 0, .45), inset 0 -1px 1px rgba(0, 0, 0, .35); }
+.dot.bad { box-shadow: 0 0 9px 2px rgba(255, 70, 40, .6), 0 0 0 1px rgba(0, 0, 0, .45), inset 0 -1px 1px rgba(0, 0, 0, .35); }
+
+/* ------------------------------------------------------------------ the gold knobs: ring bevel, fixed-light dish, machined cap
+   (.knob-cap rotates with the drag: every light on it must be rotation-invariant, so the fixed
+   speculars live on .knob::after, the dish, which stays still while the cap turns) */
+.knob {
+  box-shadow: 0 3px 4px rgba(0, 0, 0, .55), 0 9px 15px rgba(0, 0, 0, .65), inset 0 0 0 2px rgba(60, 40, 10, .7),
+              inset 0 3px 4px rgba(255, 240, 200, .4), inset 0 -3px 5px rgba(50, 30, 5, .55);
+}
+.knob::after {
+  box-shadow: inset 5px 7px 11px rgba(0, 0, 0, .62), inset -4px -5px 7px rgba(255, 255, 255, .26);
+  background:
+    radial-gradient(ellipse 30% 16% at 33% 22%, rgba(255, 252, 240, .30), transparent 70%),   /* the fixed glint */
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, .10) 0 38%, transparent 39% 100%);
+}
+.knob-cap {
+  background: radial-gradient(circle, #8e8e88 0 58%, #84847e 59% 82%, #797973 83% 100%);     /* turned on a lathe: rings */
+  box-shadow: 0 0 0 2px #2b2a27, 0 1px 0 2px rgba(255, 255, 255, .25), inset 0 0 0 1px rgba(0, 0, 0, .25);
+}
+.knob-cap::after { box-shadow: 0 0 3px rgba(0, 0, 0, .8), 0 1px 0 rgba(255, 255, 255, .35); }
+.knob.disabled { box-shadow: 0 3px 4px rgba(0, 0, 0, .4), 0 6px 9px rgba(0, 0, 0, .45), inset 0 0 0 2px rgba(60, 40, 10, .7); }
+
+/* ------------------------------------------------------------------ slide faders: a machined slot, a polished cap */
+.slot { box-shadow: inset 0 2px 4px #000, inset 0 0 0 1px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .16); }
+.cap-s {
+  background: linear-gradient(90deg, #63635c, #b9b9b2 30%, #e4e4dd 46%, #d3d3cc 55%, #6f6f68 88%, #5b5b55);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, .75), 0 1px 2px rgba(0, 0, 0, .5),
+              inset 0 1px 0 rgba(255, 255, 255, .65), inset 0 -2px 3px rgba(0, 0, 0, .35), inset 0 0 0 1px #3e3e3a;
+}
+.cap-s::after { background: linear-gradient(180deg, #1d1d1a, #3a3a36 50%, #191916); box-shadow: 0 0 2px rgba(255, 255, 255, .25); }
+.sl-ruler { filter: drop-shadow(0 1px 0 rgba(255, 252, 235, .4)); }
+.sl-scale { text-shadow: 0 1px 0 rgba(255, 252, 235, .3); }
+
+/* ------------------------------------------------------------------ menus, grooves, chevrons */
+.live-picker-menu, .live-context-menu { box-shadow: 0 12px 28px rgba(0, 0, 0, .75), 0 2px 5px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(0, 0, 0, .5); }
+table.report td, table.lin th, table.lin td { border-bottom-color: rgba(0, 0, 0, .35); box-shadow: 0 1px 0 rgba(255, 255, 255, .06); }
+details.report > summary { position: relative; padding-left: 17px; }
+details.report > summary::before {
+  content: ""; position: absolute; left: 3px; top: 7px; width: 7px; height: 7px;
+  border-right: 2px solid #d9b96a; border-top: 2px solid #d9b96a;
+  transform: rotate(45deg); transition: transform .15s;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35));
+}
+details.report[open] > summary::before { transform: rotate(135deg); }
+
+/* ------------------------------------------------------------------ scrollbars: a groove in the parquet */
+::-webkit-scrollbar-track { background: #c4ab84; box-shadow: inset 0 0 5px rgba(0, 0, 0, .35); }
+::-webkit-scrollbar-thumb { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -1px 2px rgba(0, 0, 0, .4), 0 0 0 1px rgba(0, 0, 0, .28); }
+::-webkit-scrollbar-thumb:hover { filter: brightness(1.12); }

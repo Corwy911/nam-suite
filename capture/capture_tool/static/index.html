@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAM Capture</title>
+<link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/retro.css">
+<link rel="stylesheet" href="/retro-plus.css">
+<link rel="stylesheet" href="/player.css">
+<link rel="stylesheet" href="/tuner.css">
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <h1 data-i18n="cap.title">Catturatore</h1>
+      <small data-i18n="cap.subtitle">NAM CAPTURE &middot; CATTURA CALIBRATA</small>
+    </div>
+    <div class="dial" aria-hidden="true">
+      <span class="lab">SCALA LINEARE</span><span class="lab r">48 kHz &middot; dBu</span>
+      <div class="ticks"></div><div class="dots"></div>
+      <div class="nums"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+      <div class="needle"></div>
+    </div>
+    <div class="topbar">
+      <div class="knob-cap-label">LINGUA</div>
+      <button type="button" class="knob lang-knob" id="langKnob" aria-label="Language / Lingua"><span class="knob-cap"></span></button>
+      <div class="lang-now" id="langNow">IT</div>
+      <select id="langSelect" aria-label="Language / Lingua" hidden>
+        <option value="it">Italiano</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </header>
+  <div class="banner demo" id="demoBanner" hidden></div>
+
+  <!-- 1. interface -->
+  <section class="card" id="cardDevice">
+    <h2 class="step-title"><span class="step-num">1</span><span data-i18n="cap.dev.title">Scheda audio</span></h2>
+    <div class="row" id="devPickRow" style="margin-top:10px">
+      <div class="field"><label for="devSelect" data-i18n="cap.dev.select">Scheda</label><select id="devSelect"></select></div>
+      <div class="field" style="flex:0 0 auto"><button type="button" id="devRefresh" data-i18n="cap.dev.refresh">Cerca schede</button></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="outCh" data-i18n="cap.dev.out">Uscita verso l'ampli / reamp box</label><select id="outCh"></select></div>
+      <div class="field"><label for="returnCh" data-i18n="cap.dev.return">Ingresso ritorno (dall'ampli o dal pedale)</label><select id="returnCh"></select></div>
+      <div class="field"><label for="guitarCh" data-i18n="cap.dev.guitar">Ingresso chitarra (Hi-Z)</label><select id="guitarCh"></select></div>
+      <div class="field" style="flex:0 1 220px"><label for="bufSize" data-i18n="cap.dev.buffer">Buffer della scheda</label>
+        <select id="bufSize">
+          <option value="0" data-i18n="cap.dev.buffer_auto">Automatico</option>
+          <option value="8">8</option><option value="16">16</option><option value="32">32</option><option value="48">48</option><option value="64">64</option>
+          <option value="96">96</option><option value="128">128</option><option value="192">192</option><option value="256">256</option>
+          <option value="512">512</option><option value="1024">1024</option>
+        </select></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="liveMonL" data-i18n="cap.live.mon_l">Uscita monitor (sinistra)</label><select id="liveMonL"></select></div>
+      <div class="field"><label for="liveMonR" data-i18n="cap.live.mon_r">Uscita monitor (destra, facoltativa)</label><select id="liveMonR"><option value="" data-i18n="cap.live.mon_none">Nessuna (mono)</option></select></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" id="devOpen" data-i18n="cap.dev.open">Apri la scheda</button>
+      <button type="button" id="devClose" data-i18n="cap.dev.close" hidden>Chiudi e cambia scheda / canali</button>
+    </div>
+    <div class="hint" id="devInfo" style="margin-top:8px"></div>
+    <div class="upload-status error" id="devMsg" hidden></div>
+  </section>
+
+  <!-- the two tabs: the capture wizard (steps 2-6) and the NAM player. Step 1 above is shared. -->
+  <nav class="tabs" id="mainTabs" role="tablist">
+    <button type="button" role="tab" id="tabCapture" data-tab="capture" aria-selected="true" data-i18n="cap.tab.capture">Cattura</button>
+    <button type="button" role="tab" id="tabPlayer" data-tab="player" aria-selected="false"><span class="lamp" id="plTabLamp"></span><span data-i18n="cap.tab.player">Lettore NAM</span></button>
+  </nav>
+
+  <div class="pane" id="paneCapture">
+  <!-- 2. mode -->
+  <section class="card" id="cardMode">
+    <h2 class="step-title"><span class="step-num">2</span><span data-i18n="cap.mode.title">Tipo di cattura</span></h2>
+    <label class="check"><input type="checkbox" id="calibrated" checked> <span data-i18n="cap.mode.calibrated">Cattura calibrata (livelli in dBu scritti nel modello)</span></label>
+    <div class="hint" data-i18n="cap.mode.calibrated_hint">Spenta: la registrazione è comunque allineata e tagliata, ma nei metadati non finiscono livelli.</div>
+    <div class="field" style="margin-top:12px">
+      <label data-i18n="cap.mode.gear">Cosa stai catturando?</label>
+      <div class="field-inline">
+        <label class="check"><input type="radio" name="gear" value="head" checked> <span data-i18n="cap.mode.head">Testata / ampli</span></label>
+        <label class="check"><input type="radio" name="gear" value="pedal"> <span data-i18n="cap.mode.pedal">Pedale / preamp</span></label>
+      </div>
+      <div class="hint" id="gearHint"></div>
+    </div>
+    <div class="lock-note" data-i18n="cap.locked.open">Apri prima la scheda audio.</div>
+  </section>
+
+  <!-- 3. output calibration -->
+  <section class="card" id="cardOut">
+    <h2 class="step-title"><span class="step-num">3</span><span data-i18n="cap.out.title">Calibra l'uscita</span></h2>
+    <div class="hint" id="outStored"></div>
+    <ol class="steps">
+      <li data-i18n="cap.out.s1">Scollega il cavo dall'ingresso dell'ampli (o del pedale): la misura si fa a vuoto, sull'estremità che andrà al gear.</li>
+      <li data-i18n="cap.out.s2">Collega il multimetro (tensione AC, true RMS) alla punta e alla massa di quel cavo.</li>
+      <li data-i18n="cap.out.s3">Suona il tono a 1 kHz e leggi la tensione in Vrms; scrivila qui sotto.</li>
+    </ol>
+    <div class="row">
+      <div class="field" style="flex:0 1 220px"><label for="outLevel" data-i18n="cap.out.level">Livello del tono (dBFS)</label>
+        <div class="stepper"><button type="button" data-step="-0.5" data-for="outLevel" aria-label="−0,5 dB">−</button><input type="number" id="outLevel" value="0" min="-60" max="0" step="0.5"><button type="button" data-step="0.5" data-for="outLevel" aria-label="+0,5 dB">+</button></div></div>
+      <div class="field" style="flex:0 0 auto"><button type="button" id="toneBtn" data-i18n="cap.out.play">Suona il tono</button></div>
+      <div class="field" style="flex:0 1 200px"><label for="outVrms" data-i18n="cap.out.vrms">Tensione misurata (Vrms)</label><input type="text" id="outVrms" inputmode="decimal" placeholder="6.40"></div>
+      <div class="field" style="flex:0 0 auto"><button type="button" class="primary" id="outSave" data-i18n="cap.out.save">Ferma e salva</button></div>
+    </div>
+    <div class="result-line" id="outResult"></div>
+    <div class="hint" id="outExpected"></div>
+    <div class="actions"><button type="button" class="small" id="demoFill" hidden data-i18n="cap.demo.fill">Demo: inserisci la lettura del multimetro</button></div>
+    <div class="upload-status error" id="outMsg" hidden></div>
+    <div class="lock-note" data-i18n="cap.locked.calibrated">Serve la scheda aperta e la cattura calibrata.</div>
+  </section>
+
+  <!-- 4. input / return calibration -->
+  <section class="card" id="cardIn">
+    <h2 class="step-title"><span class="step-num">4</span><span data-i18n="cap.in.title">Calibra l'ingresso</span></h2>
+    <div class="field" style="flex:0 1 320px"><label for="inWhich" data-i18n="cap.in.which">Sto calibrando</label>
+      <select id="inWhich"><option value="guitar" data-i18n="cap.dev.guitar">Ingresso chitarra (Hi-Z, per il monitor)</option><option value="return" data-i18n="cap.dev.return">Ingresso ritorno (dall'ampli o dal pedale)</option></select></div>
+    <div class="hint" id="inNeeded"></div>
+    <div class="hint" id="inStored"></div>
+    <ol class="steps">
+      <li data-i18n="cap.in.s1">Collega l'uscita scelta direttamente all'ingresso scelto con un cavo (senza ampli né pedale).</li>
+      <li data-i18n="cap.in.s2">Metti il gain dell'ingresso come lo userai nella cattura (o per la chitarra) e non toccarlo più.</li>
+      <li data-i18n="cap.in.s3">Premi "Calibra": l'app trova da sola un livello adatto e misura il ritorno più volte.</li>
+    </ol>
+    <div class="row">
+      <div class="field" style="flex:0 1 320px"><label for="inMode" data-i18n="cap.in.level_mode">Livello di prova</label>
+        <select id="inMode"><option value="auto" data-i18n="cap.in.mode_auto" selected>Automatico</option><option value="manual" data-i18n="cap.in.mode_manual">Manuale</option></select></div>
+      <div class="field" id="inLevelField" style="flex:0 1 220px" hidden><label for="inLevel" data-i18n="cap.in.level">Livello software (dBFS)</label>
+        <div class="stepper"><button type="button" data-step="-0.5" data-for="inLevel" aria-label="−0,5 dB">−</button><input type="number" id="inLevel" value="-20" min="-60" max="0" step="0.5"><button type="button" data-step="0.5" data-for="inLevel" aria-label="+0,5 dB">+</button></div></div>
+      <div class="field" id="inToneField" style="flex:0 0 auto" hidden><button type="button" id="inTone" data-i18n="cap.in.tone_play">Suona il tono di prova</button></div>
+    </div>
+    <div class="hint" id="inExpected"></div>
+    <div class="hint" id="inLive"></div>
+    <div class="meters" id="meters"></div>
+    <div class="actions">
+      <button type="button" class="primary" id="inRun" data-i18n="cap.in.run">Calibra l'ingresso</button>
+      <button type="button" id="inVerify" data-i18n="cap.in.verify">Verifica la calibrazione</button>
+      <button type="button" id="latProbe" data-i18n="cap.in.latency">Misura la latenza della scheda</button>
+      <button type="button" id="meterToggle" data-i18n="cap.meter.start" hidden>Mostra il livello in ingresso</button>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button type="button" id="linRun" data-i18n="cap.lin.run">Test di linearità dell'ingresso</button>
+    </div>
+    <div class="hint" data-i18n="cap.lin.hint">Facoltativo.</div>
+    <div class="result-line"><span class="dot" id="linDot"></span><span id="linText"></span></div>
+    <details class="report" id="linDetails" hidden><summary data-i18n="cap.lin.report">Apri report</summary><div id="linReport"></div></details>
+    <div class="hint" id="inProgress" style="margin-top:8px"></div>
+    <div class="result-line" id="inResult"></div>
+    <div class="hint" id="latResult"></div>
+    <div class="upload-status error" id="inMsg" hidden></div>
+    <div class="lock-note" id="inLock"></div>
+  </section>
+
+  <!-- extra: live NAM + IR, from the return input -->
+  <section class="card" id="cardLive">
+    <h2 class="step-title"><span class="step-num" style="background:var(--accent)">IR</span><span data-i18n="cap.live.title">Prova dal vivo (NAM + IR)</span></h2>
+    <div class="hint" id="liveHintHead" data-i18n="cap.live.hint_head">Testata: solo cambio cassa (IR), dal ritorno mic/DI. Facoltativo.</div>
+    <div class="hint" id="liveHintPedal" data-i18n="cap.live.hint_pedal">Pedale: senti il pedale attraverso un ampli e una cassa di riferimento (NAM + IR), dal ritorno del pedale. Facoltativo.</div>
+    <div class="hint" id="liveNeeded"></div>
+    <div class="tuner" id="liveTuner"></div>
+    <div class="row">
+      <div class="field" id="liveModelField"><label id="liveModelLabel" data-i18n="cap.live.model">Modello NAM (ampli)</label>
+        <div class="live-picker" id="liveModelPicker">
+          <button type="button" class="live-picker-trigger" id="liveModelTrigger" aria-haspopup="listbox"><span id="liveModelTriggerText"></span><span class="arrow">▾</span></button>
+          <div class="live-picker-menu" id="liveModelMenu" role="listbox" hidden></div>
+        </div>
+        <div class="field-inline" style="margin-top:6px">
+          <button type="button" class="small" id="liveModelBrowse" data-i18n="cap.live.browse">Sfoglia…</button>
+          <button type="button" class="small" id="liveModelOpenFolder" data-i18n="cap.live.open_folder">Apri cartella…</button>
+          <input type="file" id="liveModelFile" accept=".nam" hidden>
+        </div>
+      </div>
+      <div class="field"><label id="liveIrLabel" data-i18n="cap.live.ir">IR (cassa)</label>
+        <div class="live-picker" id="liveIrPicker">
+          <button type="button" class="live-picker-trigger" id="liveIrTrigger" aria-haspopup="listbox"><span id="liveIrTriggerText"></span><span class="arrow">▾</span></button>
+          <div class="live-picker-menu" id="liveIrMenu" role="listbox" hidden></div>
+        </div>
+        <div class="field-inline" style="margin-top:6px">
+          <button type="button" class="small" id="liveIrBrowse" data-i18n="cap.live.browse">Sfoglia…</button>
+          <button type="button" class="small" id="liveIrOpenFolder" data-i18n="cap.live.open_folder">Apri cartella…</button>
+          <input type="file" id="liveIrFile" accept=".wav" hidden>
+        </div>
+      </div>
+      <div class="field" style="flex:0 0 auto"><button type="button" id="liveRefresh" data-i18n="cap.live.refresh">Aggiorna elenco</button></div>
+    </div>
+    <label class="check"><input type="checkbox" id="liveImport"> <span data-i18n="cap.live.import">Importa nell'app (salva una copia per riusarlo)</span></label>
+    <div class="hint" data-i18n="cap.live.files_hint">Sfoglia sceglie un file da qualunque cartella, usato così com'è, senza spostarlo. Con la spunta sopra ne salva anche una copia in «Modelli NAM» o «IR» (cartella dei dati del programma, capitolo 3 del manuale), per ritrovarlo nell'elenco la volta dopo - l'elenco mostra prima quelli usati di più. «Apri cartella» apre direttamente quella cartella: comodo per copiarci dentro tanti file insieme invece di importarli uno a uno. Tasto destro su un file salvato per eliminarlo dall'elenco.</div>
+    <div id="liveTogetherField">
+      <label class="check"><input type="checkbox" id="liveTogether" checked> <span data-i18n="cap.live.together">Chitarra + pedale insieme (ascolta mentre lo pilota)</span></label>
+      <div class="hint" data-i18n="cap.live.together_hint">Con la spunta: la chitarra esce a guadagno unitario verso il pedale per tutto il tempo (come il monitor sopra, ma qui non si ferma), e senti il risultato NAM+IR sull'uscita monitor scelta al passo 1 - non sulla stessa che pilota il pedale.</div>
+    </div>
+    <label class="check"><input type="checkbox" id="liveCalibrated" checked> <span data-i18n="cap.live.calibrated">Calibrato (livelli da uscita/ingresso calibrati)</span></label>
+    <div class="hint" data-i18n="cap.live.calibrated_hint">Spenta: parte comunque, a guadagno 0 dB invece che calcolato dalla calibrazione - utile per provare subito, prima ancora di calibrare (passi 3-4).</div>
+    <div id="liveMasterKnob"></div>
+    <div class="actions">
+      <button type="button" class="primary" id="liveStart" data-i18n="cap.live.start">Avvia</button>
+      <button type="button" id="liveStop" hidden data-i18n="cap.live.stop">Ferma</button>
+    </div>
+    <div class="result-line" id="liveInfo"></div>
+    <div class="meters" id="metersLive"></div>
+    <div id="liveEditWrap" hidden>
+      <button type="button" class="small" id="liveEditToggle" data-i18n="cap.live.edit">Edit NAM</button>
+      <div id="liveEditPanel" hidden>
+        <div class="edit-tabs" id="liveEditTabs">
+          <button type="button" class="small" id="liveTabNam" data-i18n="cap.live.tab_nam">NAM</button>
+          <button type="button" class="small" id="liveTabIr" data-i18n="cap.live.tab_ir">IR</button>
+        </div>
+        <div id="liveEditNam">
+          <label class="check"><input type="checkbox" id="liveProfileCal" disabled> <span data-i18n="cap.live.profile_cal">Usa la calibrazione del profilo (blocca i livelli)</span></label>
+          <div class="hint" id="liveProfileCalHint"></div>
+          <div id="liveKnobsNam"></div>
+          <div class="hint" data-i18n="cap.live.edit_hint">Input/output: guadagno assoluto in dB.</div>
+        </div>
+        <div id="liveEditIr">
+          <div id="liveKnobsIr"></div>
+        </div>
+        <div class="hint" data-i18n="cap.live.knob_hint">Manopole: trascina su/giù (Maiusc = più fine), rotella o frecce, doppio clic = valore iniziale. Puoi anche scrivere il numero.</div>
+      </div>
+    </div>
+    <div class="upload-status error" id="liveMsg" hidden></div>
+    <div class="lock-note" id="liveLock"></div>
+  </section>
+  <div class="live-context-menu" id="liveContextMenu" hidden>
+    <button type="button" id="liveContextDelete" data-i18n="cap.live.delete">Elimina</button>
+  </div>
+
+  <!-- always usable, outside every lockable card: opening the folder needs no audio interface -->
+  <div class="actions" id="capBrowseBar" style="margin:0 0 14px">
+    <button type="button" class="capBrowse" data-i18n="cap.rec.browse">Sfoglia catture</button>
+    <div class="upload-status error" id="capBrowseMsg" hidden></div>
+  </div>
+
+  <!-- 5. capture -->
+  <section class="card" id="cardRec">
+    <h2 class="step-title"><span class="step-num">5</span><span data-i18n="cap.rec.title">Cattura</span></h2>
+    <div class="result-line"><span class="dot" id="recTrainerDot"></span><span id="recTrainerText"></span></div>
+    <div class="field">
+      <label for="inputRef" data-i18n="cap.rec.input">File di input (input.wav standard v3)</label>
+      <div class="field-inline">
+        <select id="inputRef" style="flex:1 1 260px"></select>
+        <button type="button" class="small" id="inputBrowse" data-i18n="cap.rec.input_browse">Sfoglia…</button>
+        <button type="button" class="small" id="inputFolderOpen" data-i18n="cap.rec.input_folder">Apri cartella input</button>
+        <input type="file" id="inputFile" accept=".wav,audio/wav" hidden>
+      </div>
+      <div class="hint" data-i18n="cap.rec.input_hint">È il file che viene suonato verso l'ampli (l'input standard v3 di NAM: 190 s, 48 kHz, mono). Sfoglia ne sceglie uno da qualunque cartella e ne salva una copia nella cartella «Input» della libreria, separata dai risultati, così il trainer lo ritrova.</div>
+      <div class="hint" id="inputMissing" hidden>
+        <span data-i18n="cap.rec.missing">Nella libreria WAV non c'è l'input standard v3 (190 s, 48 kHz).</span>
+        <a href="https://neural-amp-modeler.readthedocs.io/en/latest/tutorials/gui.html" target="_blank" rel="noopener" data-i18n="cap.rec.guide">Scaricalo dalla guida NAM</a>
+        <span data-i18n="cap.rec.then">e scegli il file con «Sfoglia».</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:1 1 220px"><label for="ampName" id="ampNameLabel">Ampli</label><input type="text" id="ampName" list="ampNameList"><datalist id="ampNameList"></datalist></div>
+      <div class="field" id="ampChannelField" style="flex:0 1 110px"><label for="ampChannel" data-i18n="cap.rec.channel">Canale</label><input type="text" id="ampChannel"></div>
+      <div class="field" style="flex:0 1 84px"><label for="ampGain" data-i18n="cap.rec.gain">Gain</label><input type="number" id="ampGain" min="0" max="10" step="1"></div>
+      <div class="field" id="ampVolumeField" style="flex:0 1 84px" hidden><label for="ampVolume" data-i18n="cap.rec.volume">Volume</label><input type="number" id="ampVolume" min="0" max="10" step="1"></div>
+      <div class="field" id="ampToneField" style="flex:0 1 84px" hidden><label for="ampTone" data-i18n="cap.rec.tone">Tono</label><input type="number" id="ampTone" min="0" max="10" step="1"></div>
+      <div class="field" style="flex:0 1 84px"><label for="ampBass" data-i18n="cap.rec.bass">Bassi</label><input type="number" id="ampBass" min="0" max="10" step="1"></div>
+      <div class="field" style="flex:0 1 84px"><label for="ampMid" data-i18n="cap.rec.mid">Medi</label><input type="number" id="ampMid" min="0" max="10" step="1"></div>
+      <div class="field" style="flex:0 1 84px"><label for="ampTreble" data-i18n="cap.rec.treble">Alti</label><input type="number" id="ampTreble" min="0" max="10" step="1"></div>
+      <div class="field" id="ampPresenceField" style="flex:0 1 84px"><label for="ampPresence" data-i18n="cap.rec.presence">Presence</label><input type="number" id="ampPresence" min="0" max="10" step="1"></div>
+      <div id="ampCustomRows"></div>
+      <div class="field-inline"><button type="button" class="small" id="ampAddCustom" data-i18n="cap.rec.add_custom">+ Controllo personalizzato</button>
+        <button type="button" class="small" id="ampClear" data-i18n="cap.rec.clear">Pulisci</button></div>
+      <div class="hint" data-i18n="cap.rec.helper_hint">Campi vuoti: non compaiono nel nome. Il nome qui sotto si aggiorna da solo mentre compili, ma resta modificabile a mano.</div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="modelName" data-i18n="cap.rec.name">Nome del modello</label><input type="text" id="modelName" data-i18n-ph="cap.rec.name_ph"></div>
+      <div class="field" style="flex:0 1 220px"><label for="trim" data-i18n="cap.rec.trim">Riduzione del livello inviato (dB)</label><div class="stepper"><button type="button" data-step="-0.5" data-for="trim" aria-label="−0,5 dB">−</button><input type="number" id="trim" value="0" min="-30" max="0" step="0.5"><button type="button" data-step="0.5" data-for="trim" aria-label="+0,5 dB">+</button></div></div>
+    </div>
+    <div class="hint" id="trimResult"></div>
+    <div class="hint" data-i18n="cap.rec.trim_hint">0 = il livello calibrato. Se lo riduci, il livello scritto nel modello si riduce della stessa quantità.</div>
+    <div class="notice" style="margin-top:10px" data-i18n="cap.rec.reconnect">Ora ricollega l'ampli: uscita → reamp box → ampli. Da qui in poi non toccare nessun gain o volume: la calibrazione vale solo così.</div>
+    <div class="hint" data-i18n="cap.test.hint">Con il pedale inserito: TEST.</div>
+    <div class="actions">
+      <button type="button" id="levelTest" data-i18n="cap.test.run">TEST livello (sinusoide)</button>
+    </div>
+    <div class="result-line"><span class="dot" id="testDot"></span><span id="testText"></span></div>
+    <div class="hint" id="testSuggest"></div>
+    <div class="meters" id="metersRec"></div>
+    <label class="check"><input type="checkbox" id="recWarmup"> <span data-i18n="cap.rec.warmup_opt">Riscaldamento della scheda prima dell'input</span></label>
+    <div class="hint" data-i18n="cap.rec.warmup_hint">Solo se serve.</div>
+    <div class="actions">
+      <button type="button" class="primary" id="recStart" data-i18n="cap.rec.start">Avvia la cattura</button>
+      <button type="button" id="recStop" data-i18n="cap.rec.stop" hidden>Interrompi</button>
+    </div>
+    <div class="bar" id="recBar" style="margin-top:10px" hidden><div id="recFill" style="width:0"></div></div>
+    <div class="hint" id="recText"></div>
+    <div class="upload-status error" id="recMsg" hidden></div>
+    <div class="lock-note" id="recLock"></div>
+  </section>
+
+  <!-- 6. result -->
+  <section class="card" id="cardRes" hidden>
+    <h2 class="step-title"><span class="step-num">6</span><span data-i18n="cap.res.title">Risultato</span></h2>
+    <div id="resBody"></div>
+    <div class="actions" id="resActions">
+      <button type="button" class="primary" id="resSend" data-i18n="cap.res.save">Salva nella libreria</button>
+      <button type="button" id="resDiscard" data-i18n="cap.res.discard">Scarta</button>
+      <button type="button" class="capBrowse" data-i18n="cap.rec.browse">Sfoglia catture</button>
+    </div>
+    <div class="result-line good" id="resSaved" hidden></div>
+    <div class="actions" id="resTrainerWrap" hidden>
+      <div class="result-line"><span class="dot" id="resTrainerDot"></span><span id="resTrainerText"></span></div>
+      <button type="button" id="resSendTrainer" data-i18n="cap.res.send_trainer" hidden>Invia al NAM Trainer</button>
+      <div class="upload-status error" id="resTrainerMsg" hidden></div>
+    </div>
+    <div class="actions" id="resNewWrap" hidden><button type="button" id="resNew" data-i18n="cap.res.new">Nuova cattura</button></div>
+    <div class="upload-status error" id="resMsg" hidden></div>
+  </section>
+
+  <!-- trainer: an externally-browsed folder of already-made captures, picked from the File menu (packaging/main.swift),
+       each with its own Export button - not part of the numbered wizard, so no step number -->
+  <section class="card" id="cardTrainerBrowse" hidden>
+    <h2 class="step-title"><span class="step-num" style="background:var(--accent)">&#8594;</span><span data-i18n="cap.trainer.title">Catture trovate</span></h2>
+    <div id="trainerList"></div>
+    <div class="actions"><button type="button" id="trainerClose" data-i18n="cap.trainer.close">Chiudi</button></div>
+    <div class="upload-status error" id="trainerMsg" hidden></div>
+  </section>
+  </div><!-- /paneCapture -->
+
+  <!-- ===================================================================== the NAM player -->
+  <div class="pane" id="panePlayer" hidden>
+
+    <!-- the numbers to read at a glance: the guitar's Hi-Z input is what the official plugin in the DAW wants too -->
+    <section class="card" id="cardPlCal">
+      <h2 class="step-title"><span class="step-num">dBu</span><span data-i18n="cap.player.cal.title">Valori di calibrazione</span></h2>
+      <div class="pl-readouts" id="plReadouts"></div>
+      <div class="hint" id="plCalPlugin"></div>
+      <div class="hint" data-i18n="cap.player.cal.valid">Valgono finché nessuno tocca il gain dell'ingresso né i livelli di uscita della scheda (TotalMix, +4/−10, Hi-Gain): il programma non può leggerli.</div>
+      <div class="actions"><button type="button" class="small" id="plCalGo" data-i18n="cap.player.cal.go">Vai alla calibrazione</button></div>
+    </section>
+
+    <section class="card" id="cardPlSetup">
+      <h2 class="step-title"><span class="step-num" style="background:var(--accent)">NAM</span><span data-i18n="cap.player.title">Lettore NAM</span></h2>
+      <div class="result-line"><span class="dot" id="plTrainerDot"></span><span id="plTrainerText"></span></div>
+      <div class="tuner" id="plTuner"></div>
+      <div class="row" id="plPedalRow">
+        <div class="field" id="plPedalField"><label data-i18n="cap.player.pedal">Test Pedali (NAM del pedale, davanti all'ampli)</label>
+          <div class="live-picker" id="plPedalPicker">
+            <button type="button" class="live-picker-trigger" id="plPedalTrigger" aria-haspopup="listbox"><span id="plPedalText"></span><span class="arrow">▾</span></button>
+            <div class="live-picker-menu" id="plPedalMenu" role="listbox" hidden></div>
+          </div>
+          <div class="field-inline" style="margin-top:6px">
+            <button type="button" class="small" id="plPedalBrowse" data-i18n="cap.live.browse">Sfoglia…</button>
+            <button type="button" class="small clear-x" id="plPedalClear" data-i18n-title="cap.player.clear" title="Togli">✕</button>
+            <button type="button" class="small" id="plPedalFolder" data-i18n="cap.live.open_folder">Apri cartella…</button>
+            <button type="button" class="small" id="plPedalTrainer" data-i18n="cap.player.from_trainer">Dal Trainer…</button>
+            <input type="file" id="plPedalFile" accept=".nam" hidden>
+          </div>
+          <div class="hint" id="plPedalHint" data-i18n="cap.player.pedal_hint">Facoltativo.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" id="plModelField"><label data-i18n="cap.player.model">Modello NAM (la cattura)</label>
+          <div class="live-picker" id="plModelPicker">
+            <button type="button" class="live-picker-trigger" id="plModelTrigger" aria-haspopup="listbox"><span id="plModelText"></span><span class="arrow">▾</span></button>
+            <div class="live-picker-menu" id="plModelMenu" role="listbox" hidden></div>
+          </div>
+          <div class="field-inline" style="margin-top:6px">
+            <button type="button" class="small" id="plModelBrowse" data-i18n="cap.live.browse">Sfoglia…</button>
+            <button type="button" class="small clear-x" id="plModelClear" data-i18n-title="cap.player.clear" title="Togli">✕</button>
+            <button type="button" class="small" id="plModelFolder" data-i18n="cap.live.open_folder">Apri cartella…</button>
+            <button type="button" class="small" id="plModelTrainer" data-i18n="cap.player.from_trainer">Dal Trainer…</button>
+            <input type="file" id="plModelFile" accept=".nam" hidden>
+          </div>
+        </div>
+        <div class="field" id="plIrField"><label data-i18n="cap.live.ir">IR (cassa)</label>
+          <div class="live-picker" id="plIrPicker">
+            <button type="button" class="live-picker-trigger" id="plIrTrigger" aria-haspopup="listbox"><span id="plIrText"></span><span class="arrow">▾</span></button>
+            <div class="live-picker-menu" id="plIrMenu" role="listbox" hidden></div>
+          </div>
+          <div class="field-inline" style="margin-top:6px">
+            <button type="button" class="small" id="plIrBrowse" data-i18n="cap.live.browse">Sfoglia…</button>
+            <button type="button" class="small clear-x" id="plIrClear" data-i18n-title="cap.player.clear" title="Togli">✕</button>
+            <button type="button" class="small" id="plIrFolder" data-i18n="cap.live.open_folder">Apri cartella…</button>
+            <input type="file" id="plIrFile" accept=".wav" hidden>
+          </div>
+        </div>
+        <div class="field" style="flex:0 0 auto"><button type="button" id="plRefresh" data-i18n="cap.live.refresh">Aggiorna elenco</button></div>
+      </div>
+      <label class="check"><input type="checkbox" id="plIrGear"> <span data-i18n="cap.player.ir_gear">La stessa IR anche sull'ampli vero (A)</span></label>
+      <div class="hint" id="plIrGearHint"></div>
+      <label class="check"><input type="checkbox" id="plImport"> <span data-i18n="cap.live.import">Importa nell'app (salva una copia per riusarlo)</span></label>
+      <label class="check"><input type="checkbox" id="plCalibrated" checked> <span data-i18n="cap.player.calibrated">Calibrato (A e B allo stesso livello)</span></label>
+      <label class="check"><input type="checkbox" id="plModelLevels" checked> <span data-i18n="cap.player.model_levels_use">Usa i livelli scritti nel profilo NAM</span></label>
+      <div class="hint" id="plManualHint"></div>
+      <div class="notice" style="margin-top:10px" data-i18n="cap.player.reconnect">Collega come per la cattura: uscita → reamp box → ampli, e l'uscita dell'ampli (o la sua DI) → ingresso di ritorno. La chitarra va nell'ingresso Hi-Z. Ascolti dall'uscita monitor scelta al passo 1.</div>
+      <div class="hint" id="plNeeded"></div>
+      <div class="actions">
+        <button type="button" class="primary" id="plStart" data-i18n="cap.player.start">Avvia il lettore</button>
+        <button type="button" id="plStop" hidden data-i18n="cap.player.stop">Ferma</button>
+        <button type="button" class="small" id="plEditToggle" hidden data-i18n="cap.live.edit">Edit NAM</button>
+      </div>
+      <div id="plEditPanel" hidden>
+        <div class="edit-tabs">
+          <button type="button" class="small" id="plTabNam" data-i18n="cap.live.tab_nam">NAM</button>
+          <button type="button" class="small" id="plTabIr" data-i18n="cap.live.tab_ir">IR</button>
+          <button type="button" class="small" id="plTabPedal" data-i18n="cap.player.tab_pedal" hidden>Pedale</button>
+        </div>
+        <div id="plEditNam"><div id="plKnobsNam"></div>
+          <div id="plLiteWrap" hidden><label class="check"><input type="checkbox" id="plLite"> <span data-i18n="cap.player.a2_lite">Versione A2 Lite</span></label>
+            <div class="hint" data-i18n="cap.player.a2_lite_hint">Spiegazione.</div></div><div class="hint" data-i18n="cap.live.edit_hint">Input/output: guadagno assoluto in dB.</div></div>
+        <div id="plEditIr"><div id="plKnobsIr"></div></div>
+        <div id="plEditPedal" hidden><div id="plKnobsPedal"></div>
+          <div id="plPedalLiteWrap" hidden><label class="check"><input type="checkbox" id="plPedalLite"> <span data-i18n="cap.player.pedal_lite">Versione A2 Lite del pedale</span></label></div>
+          <div class="hint" data-i18n="cap.player.pedal_edit_hint">Input e output del modello del pedale.</div></div>
+        <div class="actions"><button type="button" class="small" id="plKnobsReset" data-i18n="cap.player.knobs_reset">Torna ai valori calibrati</button></div>
+        <div class="upload-status error" id="plEditMsg" hidden></div>
+        <div class="hint" data-i18n="cap.live.knob_hint">Manopole: trascina su/giù (Maiusc = più fine), rotella o frecce, doppio clic = valore iniziale. Puoi anche scrivere il numero.</div>
+      </div>
+      <div class="upload-status error" id="plMsg" hidden></div>
+    </section>
+
+    <section class="card" id="cardPlAB">
+      <h2 class="step-title"><span class="step-num">A/B</span><span data-i18n="cap.player.ab.title">Confronto A / B</span></h2>
+      <div class="pl-lanes" id="plLanes"></div>
+      <div class="pl-keys">
+        <button type="button" class="ab-key" id="plKeyA" aria-pressed="false"><span class="lamp"></span><b>A</b><small id="plKeyALabel"></small></button>
+        <button type="button" class="ab-key" id="plKeyB" aria-pressed="false"><span class="lamp"></span><b>B</b><small id="plKeyBLabel"></small></button>
+      </div>
+      <div class="hint" data-i18n="cap.player.ab.keys_hint">Dalla tastiera: A, B, oppure la barra spaziatrice per alternare. Il passaggio è una dissolvenza di 10 ms, senza scatti.</div>
+      <div id="plMasterKnob"></div>
+      <div class="result-line" id="plInfo"></div>
+      <div class="hint" id="plInfoDetail"></div>
+      <div class="hint diag" id="plDiag"></div>
+      <div class="meters" id="plMeters"></div>
+      <div id="plTrimKnobs"></div>
+      <div class="hint" id="plLevelHint"></div>
+      <div class="upload-status error" id="plAbMsg" hidden></div>
+    </section>
+  </div><!-- /panePlayer -->
+</main>
+
+<script src="/app.js"></script>
+<script src="/player.js"></script>
+<script src="/tuner.js"></script>
+</body>
+</html>

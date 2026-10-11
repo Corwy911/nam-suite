@@ -1,0 +1,6 @@
+rocm-sdk-core==7.2.1
+rocm-sdk-devel==7.2.1
+rocm-sdk-libraries-custom==7.2.1
+rocm==7.2.1
+torch==2.9.1+rocm7.2.1
+torchaudio==2.9.1+rocm7.2.1

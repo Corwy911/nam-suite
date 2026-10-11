@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAM Trainer</title>
+<style>
+  :root {
+    --bg: #f5f5f4; --card: #ffffff; --text: #1c1917; --muted: #78716c; --line: #e7e5e4;
+    --accent: #2563eb; --accent-text: #fff; --ok: #16a34a; --warn: #d97706; --bad: #dc2626;
+    --input: #fafaf9; --code: #f5f5f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --card: #1e1d1c; --text: #f0eeeb; --muted: #a8a29e; --line: #33312f;
+      --accent: #3b82f6; --ok: #4ade80; --warn: #fbbf24; --bad: #f87171;
+      --input: #262524; --code: #171716;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 16px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 8px 0 20px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: 16px; margin: 0 0 14px; }
+  h2 .sub { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 8px; overflow-wrap: anywhere; }
+  .gpu { font-size: 13px; color: var(--muted); background: var(--card); border: 1px solid var(--line);
+         border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
+  .gpu b { color: var(--text); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type=text], input[type=number], select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--input); color: var(--text); font: inherit; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .notice { background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+            border-radius: 8px; padding: 8px 12px; font-size: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 18px; text-align: center; color: var(--muted);
+          cursor: pointer; transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .files { list-style: none; margin: 8px 0 0; padding: 0; }
+  .files li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 2px;
+              font-size: 14px; border-bottom: 1px solid var(--line); }
+  .files li .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .files .size { color: var(--muted); font-size: 12px; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--line); color: var(--muted); }
+  .tag.lib { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  button { font: inherit; cursor: pointer; border-radius: 8px; padding: 7px 14px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.danger { color: var(--bad); }
+  button.small { padding: 4px 10px; font-size: 13px; }
+  a.btn { display: inline-block; text-decoration: none; font-weight: 600; border-radius: 8px;
+          background: var(--accent); color: var(--accent-text); font-size: 13px; padding: 5px 12px; }
+  details { margin: 4px 0 14px; }
+  summary { cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px 0; }
+  details[open] summary { margin-bottom: 10px; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text); margin: 0; }
+  .check input { width: auto; }
+  .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .bar > div { height: 100%; background: var(--accent); transition: width .5s; }
+  .upload-status { margin-top: 10px; font-size: 14px; }
+  .error { color: var(--bad); }
+  .job { padding: 14px 0; border-top: 1px solid var(--line); }
+  .job:first-child { border-top: 0; padding-top: 0; }
+  .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .job-name { font-weight: 600; overflow-wrap: anywhere; }
+  .badge { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+           background: var(--line); color: var(--muted); }
+  .badge.running { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+  .badge.done { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+  .badge.failed { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+  .meta { font-size: 13px; color: var(--muted); margin: 3px 0 8px; overflow-wrap: anywhere; }
+  .stats { font-size: 13px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  pre.log { margin: 10px 0 0; padding: 10px; background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+            font: 12px/1.4 ui-monospace, Consolas, monospace; max-height: 260px; overflow: auto; white-space: pre-wrap; }
+  .plot { max-width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .empty { color: var(--muted); text-align: center; padding: 14px 0 4px; }
+  .esr-great { color: var(--ok); } .esr-ok { color: var(--warn); } .esr-bad { color: var(--bad); }
+  .upd { padding: 14px 0; border-top: 1px solid var(--line); }
+  .upd:first-of-type { border-top: 0; padding-top: 0; }
+  .upd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .upd-title { font-weight: 600; }
+  .upd-msg { margin-top: 10px; font-size: 14px; }
+  .upd-msg.ok { color: var(--ok); } .upd-msg.err { color: var(--bad); white-space: pre-wrap; }
+  .upd-box { margin-top: 10px; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 10px; padding: 12px;
+             background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .upd-box h3 { font-size: 14px; margin: 0 0 8px; }
+  pre.notes { margin: 8px 0; padding: 8px 10px; background: var(--code); border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap;
+              font: 12px/1.45 system-ui, sans-serif; max-height: 180px; overflow: auto; }
+  .flags { margin: 8px 0; padding: 8px 10px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--warn) 55%, transparent);
+           background: color-mix(in srgb, var(--warn) 10%, transparent); font-size: 13px; }
+  .flags code { display: block; font: 11.5px/1.4 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; margin-top: 3px; }
+  .unmet { margin: 8px 0; color: var(--bad); font-size: 13px; }
+  .filelist { font: 12px/1.5 ui-monospace, Consolas, monospace; max-height: 160px; overflow: auto; margin: 6px 0 0; padding: 0; list-style: none; }
+  .backups { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .backups select { width: auto; max-width: 100%; padding: 4px 8px; }
+  [hidden] { display: none !important; }
+</style>
+<style>
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 100%; }
+  .topbar .gpu { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+  .topbar select { width: auto; padding: 4px 8px; font-size: 13px; border-radius: 999px; }
+  .lan { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); background: var(--card);
+         border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; margin: 0; cursor: pointer; }
+  .lan b { color: var(--text); font-weight: 600; }
+  .switch { position: relative; width: 38px; height: 22px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider { position: absolute; inset: 0; background: var(--line); border-radius: 999px; transition: .15s; }
+  .slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #fff;
+                    border-radius: 50%; transition: .15s; }
+  .switch input:checked + .slider { background: var(--ok); }
+  .switch input:checked + .slider::before { transform: translateX(16px); }
+  .switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .lan-info { font-size: 12px; color: var(--muted); margin: -10px 0 16px; overflow-wrap: anywhere; }
+  .lan-info .lan-address-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+  .lan-info .lan-address { display: inline-block; font: 700 30px/1.1 ui-monospace, Consolas, "Courier New", monospace; letter-spacing: .04em;
+                           color: var(--accent-text); background: #1b1b1b; border: 2px solid #000; border-radius: 6px; padding: 8px 18px;
+                           box-shadow: inset 0 0 10px rgba(0,0,0,.6), 0 2px 0 rgba(255,255,255,.35); cursor: copy; }
+  .lan-info .lan-address:hover { filter: brightness(1.15); }
+  .cap-row { padding: 12px 0; border-top: 1px solid var(--line); }
+  .cap-row:first-child { border-top: 0; padding-top: 0; }
+  .cap-row .meta { margin: 3px 0 0; }
+  .cap-row .meta.warn { color: var(--warn); }
+  .banner { border: 1px solid color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent);
+            border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
+</style>
+<link rel="stylesheet" href="/retro.css">
+<link rel="stylesheet" href="/retro-plus.css">
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><h1>NAM Trainer</h1></div>
+    <div class="dial" aria-hidden="true">
+      <span class="lab" data-i18n="ui.dial.left">ESR SCALE</span><span class="lab r">0 &middot; 1</span>
+      <div class="ticks"></div><div class="dots"></div>
+      <div class="nums"><span>0</span><span>.1</span><span>.2</span><span>.3</span><span>.4</span><span>.5</span><span>.6</span><span>.7</span><span>.8</span><span>.9</span><span>1</span></div>
+      <div class="needle" id="dialNeedle"></div>
+    </div>
+    <div class="topbar">
+      <label class="lan" id="lanLabel">
+        <span data-i18n="ui.lan.label">LAN</span>
+        <span class="switch"><input type="checkbox" id="lanSwitch"><span class="slider"></span></span>
+        <b id="lanState"></b>
+      </label>
+      <select id="langSelect" aria-label="Language / Lingua">
+        <option value="it">Italiano</option>
+        <option value="en">English</option>
+      </select>
+      <div class="gpu" id="gpu">…</div>
+    </div>
+  </header>
+  <div class="lan-info" id="lanInfo"></div>
+  <div class="banner" id="hwBanner" hidden></div>
+
+  <!-- The training engine as grandpa's radio: nixie tubes show the percentage, the green terminal the details (retro.css) -->
+  <section class="tube-panel" id="tubePanel">
+    <div class="tube-plate">
+      <span class="tube-plate-label" data-i18n="ui.tubes.title">Training engine</span>
+      <span class="tube-plate-state" id="tubeState"></span>
+    </div>
+    <div class="cabinet">
+      <div class="r-window" aria-hidden="true">
+        <div class="r-chassis"></div>
+        <div class="r-inside">
+          <div class="nixies" id="nixies"></div>
+          <div class="eye-bezel"><div class="eye"></div></div>
+        </div>
+      </div>
+      <div class="r-dial" aria-hidden="true">
+        <div class="nums" id="radioNums"></div>
+        <div class="ticks"></div>
+        <div class="foot"><span data-i18n="ui.radio.dial">Training progress</span><span>%</span></div>
+        <div class="ndl"></div>
+      </div>
+      <div class="r-mid">
+        <div class="r-knob" aria-hidden="true" style="transform:rotate(-35deg)"></div>
+        <div class="r-console">
+          <div class="r-cloth" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="r-screen"><div class="crt" id="crt" role="status"></div></div>
+          <div class="r-cloth" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="r-knob" aria-hidden="true" style="transform:rotate(60deg)"></div>
+      </div>
+      <div class="r-bottom" aria-hidden="true">
+        <div class="r-keys"><span>FONO</span><span>OL</span><span class="down">OM</span><span>OC</span><span class="nam">NAM</span></div>
+      </div>
+    </div>
+  </section>
+
+  <form id="form" class="card">
+    <h2 data-i18n="ui.form.title">Nuovo training</h2>
+    <div class="notice" id="retrainNote" hidden>
+      <span id="retrainText"></span>
+      <button type="button" class="small" id="retrainClose" data-i18n="ui.close">Chiudi</button>
+    </div>
+
+    <div class="field">
+      <label for="trainer" data-i18n="ui.trainer.label">Trainer / modello</label>
+      <select id="trainer"></select>
+      <div class="hint" id="trainerHint"></div>
+    </div>
+
+    <div class="field">
+      <label for="inputSelect" data-i18n="ui.input.label">File input (DI / segnale di test originale)</label>
+      <select id="inputSelect"></select>
+      <input type="file" id="inputFile" accept=".wav,audio/wav,audio/x-wav" style="margin-top:8px" hidden>
+      <div class="hint" data-i18n-html="ui.input.hint"></div>
+    </div>
+
+    <div class="field">
+      <label data-i18n="ui.output.label">File output (registrazione reamp) — puoi sceglierne più di uno</label>
+      <div class="drop" id="drop" data-i18n="ui.drop">Trascina qui i .wav nuovi oppure clicca per sceglierli</div>
+      <input type="file" id="outputFiles" accept=".wav,audio/wav,audio/x-wav" multiple hidden>
+      <select id="outputAdd" style="margin-top:8px"></select>
+      <ul class="files" id="fileList"></ul>
+    </div>
+
+    <div class="field">
+      <label for="wav_folder" data-i18n="ui.folder.label">Sottocartella per i WAV nuovi (opzionale)</label>
+      <input type="text" id="wav_folder" list="folderList" data-i18n-ph="ui.folder.ph">
+      <datalist id="folderList"></datalist>
+      <div class="hint" data-i18n-html="ui.folder.hint"></div>
+    </div>
+
+    <details>
+      <summary data-i18n="ui.params.summary">Parametri di training</summary>
+      <div class="grid">
+        <div><label for="epochs" data-i18n="ui.epochs">Epoche</label><input type="number" id="epochs" min="1" max="5000"></div>
+        <div><label for="batch_size" data-i18n="ui.batch">Batch size</label><input type="number" id="batch_size" min="1" max="512"></div>
+        <div><label for="latency" data-i18n="ui.latency">Latenza (campioni)</label><input type="number" id="latency" data-i18n-ph="ui.auto"></div>
+        <div><label for="threshold_esr" data-i18n="ui.threshold">Soglia ESR (stop)</label><input type="number" id="threshold_esr" step="any" min="0" data-i18n-ph="ui.none"></div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="ignore_checks"> <span data-i18n="ui.ignore_checks">Ignora i controlli sui dati (a proprio rischio)</span></label>
+      </div>
+    </details>
+
+    <details id="reloadedBox" hidden>
+      <summary data-i18n="ui.reloaded.summary">Parametri Reloaded (learning rate, scheduler, due fasi)</summary>
+      <div class="grid">
+        <div><label for="lr" data-i18n="ui.lr">Learning rate</label><input type="number" id="lr" step="any" min="0"></div>
+        <div><label for="lr_decay" data-i18n="ui.lr_decay">LR decay</label><input type="number" id="lr_decay" step="any" min="0"></div>
+        <div><label for="lr_scheduler" data-i18n="ui.scheduler">Scheduler</label><select id="lr_scheduler"></select></div>
+        <div><label for="stage_mode" data-i18n="ui.training_mode">Training</label><select id="stage_mode"></select></div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="fit_mrstft" checked> <span data-i18n="ui.mrstft">Loss MRSTFT (migliora le alte frequenze)</span></label>
+      </div>
+      <div id="stage2Box" hidden>
+        <div class="hint" style="margin-bottom:8px" data-i18n="ui.stage2.hint">Fase 2 (rifinitura): riparte dal miglior checkpoint della fase 1.</div>
+        <div class="grid">
+          <div><label for="stage2_epochs" data-i18n="ui.stage2_epochs">Epoche fase 2</label><input type="number" id="stage2_epochs" min="1" max="5000"></div>
+          <div><label for="stage2_lr" data-i18n="ui.stage2_lr">Learning rate fase 2</label><input type="number" id="stage2_lr" step="any" min="0"></div>
+          <div><label for="stage2_lr_decay" data-i18n="ui.stage2_lr_decay">LR decay fase 2</label><input type="number" id="stage2_lr_decay" step="any" min="0"></div>
+          <div><label for="stage2_lr_scheduler" data-i18n="ui.stage2_scheduler">Scheduler fase 2</label><select id="stage2_lr_scheduler"></select></div>
+          <div><label for="stage2_focus" data-i18n="ui.stage2_focus">Focus fase 2</label><select id="stage2_focus"></select></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary data-i18n="ui.meta.summary">Metadati del modello (opzionali)</summary>
+      <div class="grid">
+        <div><label for="name" data-i18n="ui.meta.name">Nome</label><input type="text" id="name" data-i18n-ph="ui.meta.name_ph"></div>
+        <div><label for="modeled_by" data-i18n="ui.meta.by">Creato da</label><input type="text" id="modeled_by"></div>
+        <div><label for="gear_make" data-i18n="ui.meta.make">Marca</label><input type="text" id="gear_make"></div>
+        <div><label for="gear_model" data-i18n="ui.meta.model">Modello</label><input type="text" id="gear_model"></div>
+        <div><label for="gear_type" data-i18n="ui.meta.gear">Tipo di gear</label><select id="gear_type"></select></div>
+        <div><label for="tone_type" data-i18n="ui.meta.tone">Tipo di tono</label><select id="tone_type"></select></div>
+        <div><label for="input_level_dbu" data-i18n="ui.meta.in_level">Input level (dBu)</label><input type="number" id="input_level_dbu" step="any"></div>
+        <div><label for="output_level_dbu" data-i18n="ui.meta.out_level">Output level (dBu)</label><input type="number" id="output_level_dbu" step="any"></div>
+      </div>
+    </details>
+
+    <button type="submit" class="primary" id="submit" data-i18n="ui.submit">Avvia training</button>
+    <div class="upload-status" id="uploadStatus" hidden>
+      <div class="bar"><div id="uploadBar" style="width:0"></div></div>
+      <div id="uploadText" class="hint"></div>
+    </div>
+    <div class="upload-status error" id="formError" hidden></div>
+  </form>
+
+  <section class="card" id="capsCard">
+    <h2><span data-i18n="ui.caps.title">File ricevuti ed elaborati</span><span class="sub" data-i18n="ui.caps.sub"></span></h2>
+    <div class="actions" id="capsLocal" hidden>
+      <button type="button" class="small" id="capsReveal" data-i18n="ui.caps.reveal">Sfoglia</button>
+      <button type="button" class="small" id="capsRefresh" data-i18n="ui.caps.refresh">Aggiorna</button>
+    </div>
+    <div id="caps"></div>
+    <div class="empty" id="capsEmpty" data-i18n="ui.caps.empty">Nessun file ricevuto dal catturatore e nessun training ancora.</div>
+  </section>
+
+  <section class="card">
+    <h2><span data-i18n="ui.models.title">Modelli generati</span><span class="sub" id="libPath"></span></h2>
+    <div id="jobs"></div>
+    <div class="empty" id="empty" data-i18n="ui.models.empty">Nessun modello ancora. La cartella è vuota.</div>
+  </section>
+
+  <section class="card" id="updatesCard">
+    <h2><span data-i18n="ui.upd.title">Aggiornamenti dei trainer</span><span class="sub" data-i18n="ui.upd.sub"></span></h2>
+    <div id="updates"></div>
+    <pre class="log" id="updLog" hidden></pre>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const NEW = "__new__";
+let outputs = [];             // {kind: "new", file} | {kind: "lib", rel}
+let wavs = { files: [], folders: [] };
+let wavSig = "";
+let PATHS = { library: "", wavs: "", library_name: "NAM Generati", wavs_name: "File WAV caricati" };
+const cards = new Map();      // model id -> {root, r}
+const openLogs = new Set();
+const openPlots = new Set();
+
+// ------------------------------------------------------------------ language
+const LANGS = { it: "Italiano", en: "English" };
+let I18N = { it: {}, en: {} };
+function pickLang() {
+  try { const saved = localStorage.getItem("lang"); if (saved in LANGS) return saved; } catch {}
+  return (navigator.language || "en").toLowerCase().startsWith("it") ? "it" : "en";
+}
+let LANG = pickLang();
+const locale = () => (LANG === "it" ? "it-IT" : "en-GB");
+function t(key, params = {}) {
+  const text = (I18N[LANG] && I18N[LANG][key]) ?? (I18N.it && I18N.it[key]) ?? key;
+  return text.replace(/\{(\w+)\}/g, (m, k) => (k in params ? params[k] : m));
+}
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Static texts carry data-i18n (text), data-i18n-ph (placeholder) or data-i18n-html (text with <b>, name inserted safely).
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-i18n]").forEach((e) => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
+  document.querySelectorAll("[data-i18n-html]").forEach((e) => {
+    e.innerHTML = t(e.dataset.i18nHtml, { name: escapeHtml(PATHS.wavs_name) });
+  });
+  $("#libPath").textContent = PATHS.library ? t("ui.models.mirror", { path: PATHS.library }) : "";
+  $("#langSelect").value = LANG;
+}
+async function loadI18n() {
+  try { I18N = await (await fetch("/i18n.json", { cache: "no-cache" })).json(); } catch { /* texts fall back to their keys */ }
+}
+
+// ---------------------------------------------------------------- helpers
+const fmtSize = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " KB";
+const fmtDate = (ts) => new Date(ts * 1000).toLocaleString(locale(), { dateStyle: "short", timeStyle: "short" });
+function fmtTime(s) {
+  if (s == null) return "…";
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+  return h ? `${h}h ${m}m` : m ? `${m}m ${String(sec).padStart(2, "0")}s` : `${sec}s`;
+}
+function esrClass(e) { return e < 0.01 ? "esr-great" : e < 0.035 ? "esr-ok" : "esr-bad"; }
+function esrLabel(e) {
+  return t(e < 0.01 ? "ui.esr.great" : e < 0.035 ? "ui.esr.ok" : e < 0.1 ? "ui.esr.maybe" : e < 0.3 ? "ui.esr.poor" : "ui.esr.bad");
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { "X-Lang": LANG, ...(opts.headers || {}) } });
+  if (!r.ok) {
+    let detail = r.statusText;
+    try { detail = (await r.json()).detail || detail; } catch {}
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return r.json();
+}
+function el(tag, props = {}, ...children) {
+  const e = document.createElement(tag);
+  Object.assign(e, props);
+  e.append(...children);
+  return e;
+}
+function showError(msg) {
+  const box = $("#formError");
+  box.hidden = !msg;
+  box.textContent = msg || "";
+}
+
+// ---------------------------------------------------------- config / trainer
+const trainerMeta = new Map();   // trainer id -> catalogue item (+ group hint)
+let CFG = null;
+let currentBackend = null;
+const RELOADED_SELECTS = ["lr_scheduler", "stage_mode", "stage2_lr_scheduler", "stage2_focus", "gear_type", "tone_type"];
+
+function fillSelect(sel, values) {
+  sel.replaceChildren(el("option", { value: "", textContent: "—" }),
+    ...values.map((v) => el("option", { value: v, textContent: v })));
+}
+function setOptions(sel, values, labels = {}) {
+  sel.replaceChildren(...values.map((v) => el("option", { value: v, textContent: labels[v] || v })));
+}
+async function loadConfig() {
+  const keepTrainer = $("#trainer").value;
+  const keep = Object.fromEntries(RELOADED_SELECTS.map((id) => [id, $("#" + id).value]));
+  CFG = await api("/api/config");
+  PATHS = CFG.paths;
+  applyStatic();
+  fillSelect($("#gear_type"), CFG.gear_types);
+  fillSelect($("#tone_type"), CFG.tone_types);
+  setOptions($("#lr_scheduler"), CFG.reloaded.schedulers);
+  setOptions($("#stage2_lr_scheduler"), CFG.reloaded.schedulers);
+  setOptions($("#stage_mode"), CFG.reloaded.stage_modes,
+    { single_stage: t("ui.mode.single"), two_stage: t("ui.mode.two") });
+  setOptions($("#stage2_focus"), CFG.reloaded.stage2_focus);
+  trainerMeta.clear();
+  $("#trainer").replaceChildren(...CFG.trainers.map((g) =>
+    el("optgroup", { label: g.group }, ...g.items.map((i) => {
+      trainerMeta.set(i.id, { ...i, hint: g.hint });
+      return el("option", { value: i.id, textContent: i.label });
+    }))));
+  if (keepTrainer && trainerMeta.has(keepTrainer)) $("#trainer").value = keepTrainer;
+  for (const [id, value] of Object.entries(keep)) if (value && [...$("#" + id).options].some((o) => o.value === value)) $("#" + id).value = value;
+  applyTrainer(Boolean(keepTrainer));
+}
+// Switching trainer resets epochs/batch only when the backend changes (so edits survive moving
+// between architectures); learning rate / decay follow the architecture's recommendation.
+function applyTrainer(languageChange = false) {
+  const item = trainerMeta.get($("#trainer").value);
+  const reloaded = item.backend === "reloaded";
+  const d = CFG.defaults[item.backend];
+  if (item.backend !== currentBackend && !languageChange) {
+    $("#epochs").value = d.epochs;
+    $("#batch_size").value = d.batch_size;
+    if (reloaded) {
+      $("#lr_scheduler").value = d.lr_scheduler;
+      $("#fit_mrstft").checked = d.fit_mrstft;
+      $("#stage_mode").value = d.stage_mode;
+      $("#stage2_epochs").value = d.stage2_epochs;
+      $("#stage2_lr").value = d.stage2_lr;
+      $("#stage2_lr_decay").value = d.stage2_lr_decay;
+      $("#stage2_lr_scheduler").value = d.stage2_lr_scheduler;
+      $("#stage2_focus").value = d.stage2_focus;
+    }
+    $("#reloadedBox").open = reloaded;
+  }
+  if (reloaded && !languageChange) { $("#lr").value = item.lr; $("#lr_decay").value = item.lr_decay; }
+  currentBackend = item.backend;
+  $("#reloadedBox").hidden = !reloaded;
+  $("#trainerHint").textContent = item.hint || "";
+  syncStageMode();
+}
+function syncStageMode() { $("#stage2Box").hidden = $("#stage_mode").value !== "two_stage"; }
+$("#trainer").addEventListener("change", () => applyTrainer());
+$("#stage_mode").addEventListener("change", syncStageMode);
+
+// ------------------------------------------------------------- WAV library
+const wavLabel = (f) => `${f.name} — ${f.duration}s, ${f.samplerate / 1000} kHz, ${fmtSize(f.size)}`;
+function groupLabel(folder) { return folder ? `${PATHS.wavs_name} › ${folder.split("/").join(" › ")}` : PATHS.wavs_name; }
+function wavGroups() {
+  const groups = new Map();
+  for (const f of wavs.files) {
+    if (!groups.has(f.folder)) groups.set(f.folder, []);
+    groups.get(f.folder).push(f);
+  }
+  return [...groups].map(([folder, files]) =>
+    el("optgroup", { label: groupLabel(folder) }, ...files.map((f) => el("option", { value: f.rel, textContent: wavLabel(f) }))));
+}
+// The DI is almost always the same file: remember the last one used (per browser, purely a convenience).
+function lastInput() { try { return localStorage.getItem("lastInput") || ""; } catch { return ""; } }
+function rememberInput(rel) { try { if (rel && rel !== NEW) localStorage.setItem("lastInput", rel); } catch {} }
+
+function rebuildWavControls() {
+  const input = $("#inputSelect"), keep = input.value || lastInput();
+  input.replaceChildren(...wavGroups(), el("option", { value: NEW, textContent: t("ui.input.new") }));
+  const values = [...input.querySelectorAll("option")].map((o) => o.value);
+  input.value = values.includes(keep) ? keep : (wavs.files[0] ? wavs.files[0].rel : NEW);
+  syncInputMode();
+
+  const add = $("#outputAdd");
+  add.replaceChildren(
+    el("option", { value: "", textContent: wavs.files.length ? t("ui.output.add") : t("ui.output.none") }),
+    ...wavGroups());
+  add.value = "";
+  add.disabled = !wavs.files.length;
+  $("#folderList").replaceChildren(...wavs.folders.map((f) => el("option", { value: f })));
+  renderOutputs();
+}
+async function loadWavs(force = false) {
+  const data = await api("/api/wavs");
+  const sig = JSON.stringify([data.files.map((f) => [f.rel, f.size, f.mtime]), data.folders, LANG]);
+  if (sig === wavSig && !force) return;
+  wavSig = sig;
+  wavs = data;
+  rebuildWavControls();
+}
+function syncInputMode() { $("#inputFile").hidden = $("#inputSelect").value !== NEW; }
+$("#inputSelect").addEventListener("change", () => { syncInputMode(); rememberInput($("#inputSelect").value); });
+// refresh the mirror when the user is about to open a dropdown (files may have been added by hand)
+for (const id of ["#inputSelect", "#outputAdd"]) $(id).addEventListener("focus", () => loadWavs().catch(() => {}));
+
+// --------------------------------------------------------------- outputs
+function renderOutputs() {
+  $("#fileList").replaceChildren(...outputs.map((o, i) => {
+    const label = o.kind === "new" ? o.file.name : o.rel;
+    const size = o.kind === "new" ? o.file.size : (wavs.files.find((f) => f.rel === o.rel) || {}).size;
+    return el("li", {}, el("span", { className: "fname", textContent: label, title: label }),
+      el("span", { className: "size" },
+        el("span", { className: "tag " + (o.kind === "lib" ? "lib" : ""), textContent: t(o.kind === "lib" ? "ui.tag.lib" : "ui.tag.new") }),
+        size ? fmtSize(size) : "",
+        el("button", { type: "button", className: "small", textContent: "✕", title: t("ui.remove"),
+                       onclick: () => { outputs.splice(i, 1); renderOutputs(); } })));
+  }));
+}
+function addNewFiles(list) {
+  for (const f of list) {
+    if (!/\.wav$/i.test(f.name)) { showError(t("ui.err.not_wav", { name: f.name })); continue; }
+    if (!outputs.some((o) => o.kind === "new" && o.file.name === f.name && o.file.size === f.size)) outputs.push({ kind: "new", file: f });
+  }
+  renderOutputs();
+}
+const drop = $("#drop");
+drop.addEventListener("click", () => $("#outputFiles").click());
+$("#outputFiles").addEventListener("change", (e) => { addNewFiles(e.target.files); e.target.value = ""; });
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); addNewFiles(e.dataTransfer.files); });
+$("#outputAdd").addEventListener("change", (e) => {
+  const rel = e.target.value;
+  if (rel && !outputs.some((o) => o.kind === "lib" && o.rel === rel)) {
+    outputs.push({ kind: "lib", rel });
+    // NAM Capture leaves a sidecar .json with the calibration next to a captured WAV: copy it into the
+    // level fields (only the levels it actually has - a "head" capture has no output_level_dbu, for example).
+    const levels = (wavs.files.find((f) => f.rel === rel) || {}).capture_levels;
+    if (levels) for (const k of ["input_level_dbu", "output_level_dbu"]) if (levels[k] != null) $("#" + k).value = levels[k];
+  }
+  e.target.value = "";
+  renderOutputs();
+});
+
+// ---------------------------------------------------------------- submit
+$("#form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  showError("");
+  const inputSel = $("#inputSelect").value;
+  if (inputSel === NEW && !$("#inputFile").files.length) return showError(t("ui.err.pick_input"));
+  if (!inputSel) return showError(t("ui.err.pick_input"));
+  if (!outputs.length) return showError(t("ui.err.add_output"));
+
+  const fd = new FormData();
+  if (inputSel === NEW) fd.append("input_file", $("#inputFile").files[0]);
+  else fd.append("input_ref", inputSel);
+  for (const o of outputs) {
+    if (o.kind === "new") fd.append("output_files", o.file, o.file.name);
+    else fd.append("output_refs", o.rel);
+  }
+  for (const id of ["wav_folder", "epochs", "batch_size", "latency", "threshold_esr", "name", "modeled_by", "gear_make",
+                    "gear_model", "gear_type", "tone_type", "input_level_dbu", "output_level_dbu"])
+    fd.append(id, $("#" + id).value);
+  fd.append("ignore_checks", $("#ignore_checks").checked);
+  fd.append("trainer", $("#trainer").value);
+  if (currentBackend === "reloaded") {
+    for (const id of ["lr", "lr_decay", "lr_scheduler", "stage_mode", "stage2_epochs", "stage2_lr",
+                      "stage2_lr_decay", "stage2_lr_scheduler", "stage2_focus"])
+      fd.append(id, $("#" + id).value);
+    fd.append("fit_mrstft", $("#fit_mrstft").checked);
+  }
+
+  const uploads = outputs.filter((o) => o.kind === "new").reduce((s, o) => s + o.file.size, 0)
+                + (inputSel === NEW ? $("#inputFile").files[0].size : 0);
+  const xhr = new XMLHttpRequest();
+  $("#submit").disabled = true;
+  $("#uploadStatus").hidden = !uploads;
+  xhr.upload.onprogress = (ev) => {
+    $("#uploadBar").style.width = (ev.lengthComputable ? ev.loaded / ev.total * 100 : 0) + "%";
+    $("#uploadText").textContent = t("ui.uploading", { done: fmtSize(ev.loaded), total: fmtSize(uploads) });
+  };
+  xhr.onload = async () => {
+    $("#submit").disabled = false;
+    $("#uploadStatus").hidden = true;
+    if (xhr.status >= 200 && xhr.status < 300) {
+      const res = JSON.parse(xhr.responseText);
+      outputs = [];
+      $("#inputFile").value = "";
+      $("#retrainNote").hidden = true;
+      await loadWavs(true);
+      $("#inputSelect").value = res.input_rel;
+      rememberInput(res.input_rel);
+      syncInputMode();
+      refresh();
+    } else {
+      let detail = xhr.statusText;
+      try { const d = JSON.parse(xhr.responseText).detail; detail = typeof d === "string" ? d : JSON.stringify(d); } catch {}
+      showError(detail);
+    }
+  };
+  xhr.onerror = () => { $("#submit").disabled = false; $("#uploadStatus").hidden = true; showError(t("ui.err.network")); };
+  xhr.open("POST", "/api/models");
+  xhr.setRequestHeader("X-Lang", LANG);
+  xhr.send(fd);
+});
+
+// ----------------------------------------------------------- retrain shortcut
+function retrain(m) {
+  const sel = $("#inputSelect");
+  if ([...sel.options].some((o) => o.value === m.input_rel)) sel.value = m.input_rel;
+  syncInputMode();
+  outputs = [{ kind: "lib", rel: m.output_rel }];
+  renderOutputs();
+  const md = m.metadata || {};
+  for (const k of ["modeled_by", "gear_make", "gear_model", "gear_type", "tone_type", "input_level_dbu", "output_level_dbu"])
+    $("#" + k).value = md[k] ?? "";
+  $("#name").value = "";
+  $("#retrainText").textContent = t("ui.retrain.text", { name: m.name });
+  $("#retrainNote").hidden = false;
+  showError("");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("#trainer").focus();
+}
+$("#retrainClose").addEventListener("click", () => { $("#retrainNote").hidden = true; });
+
+// ------------------------------------------------------------------ models
+const STATE_KEY = { queued: "ui.state.queued", running: "ui.state.running", done: "ui.state.done", failed: "ui.state.failed", cancelled: "ui.state.cancelled" };
+
+// ------------------------------------------ training engine (retro.css): the radio with nixie tubes, magic eye and green terminal
+function buildTubes() {
+  const cathodes = ["1", "6", "2", "7", "5", "0", "4", "9", "8", "3"];      // stacked in the real order of a nixie
+  const nixie = (glyphs, cls) => el("div", { className: "nixie " + cls },
+    el("div", { className: "nx-glass" }, el("div", { className: "nx-digits" }, ...glyphs.map((g) => el("span", {}, g))), el("div", { className: "nx-mesh" })),
+    el("div", { className: "nx-base" }));
+  $("#nixies").replaceChildren(nixie(cathodes, "num"), nixie(cathodes, "num"), nixie(cathodes, "num"), nixie(["%"], "sym"));
+  $("#radioNums").replaceChildren(...Array.from({ length: 11 }, (_, i) => el("span", { style: `left:${i * 10}%` }, String(i * 10))));
+}
+const progressPct = (p) => p ? Math.min(100, (p.epoch + (p.batches ? p.batch / p.batches : 0)) / p.epochs * 100) : 0;
+function updateTubes(models) {
+  const jobs = models.filter((m) => m.kind === "job");
+  const running = jobs.find((m) => m.state === "running");
+  const queued = jobs.filter((m) => m.state === "queued").length;
+  const p = running && running.progress;
+  const pct = running ? progressPct(p) : 0;
+  const panel = $("#tubePanel");
+  panel.classList.toggle("busy", !!running);
+  panel.style.setProperty("--p", pct / 100);
+  $("#dialNeedle").style.left = (running ? 62 : 4) + "%";
+  const digits = String(Math.round(pct)).padStart(3, "0");
+  panel.querySelectorAll(".nixie").forEach((nx, i) => {
+    nx.classList.toggle("lit", !!running);
+    nx.querySelectorAll("span").forEach((s) => s.classList.toggle("on", !!running && (nx.classList.contains("sym") || s.textContent === digits[i])));
+  });
+  $("#tubeState").textContent = running ? t("ui.tubes.running", { name: running.name }) : queued ? t("ui.tubes.queued") : "";
+
+  let lines;
+  if (running) {
+    const cells = 18, full = Math.round(pct / 100 * cells);
+    const epoch = p && t(p.esr != null ? "ui.crt.epoch_esr" : "ui.crt.epoch",
+      { epoch: Math.min(p.epoch + 1, p.epochs), epochs: p.epochs, esr: p.esr != null ? p.esr.toFixed(4) : "" });
+    lines = ["> " + t("ui.crt.running", { name: running.name }),
+             "> " + (p ? epoch : t("ui.crt.starting")),
+             "> " + (p ? t("ui.crt.time", { elapsed: fmtTime(p.elapsed_s), eta: fmtTime(p.eta_s) }) : "…"),
+             `> [${"█".repeat(full)}${"░".repeat(cells - full)}] ${Math.round(pct)}%`];
+  } else {
+    const last = jobs.filter((m) => m.state === "done" && m.esr != null).sort((a, b) => (b.finished || 0) - (a.finished || 0))[0];
+    lines = [t("ui.crt.ready"),
+             "> " + (last ? t("ui.crt.last", { name: last.name, esr: last.esr.toFixed(4) }) : t("ui.crt.none")),
+             "> " + (queued ? t("ui.crt.queued", { n: queued }) : t("ui.crt.wait")),
+             ["> ", el("span", { className: "cur" }, "█")]];
+  }
+  $("#crt").replaceChildren(...lines.map((l) => el("div", {}, ...[].concat(l))));
+}
+
+function makeCard() {
+  const r = {};
+  r.name = el("span", { className: "job-name" });
+  r.badge = el("span", { className: "badge" });
+  r.meta = el("div", { className: "meta" });
+  r.bar = el("div"); r.barWrap = el("div", { className: "bar" }, r.bar);
+  r.stats = el("div", { className: "stats" });
+  r.error = el("div", { className: "error", style: "margin-top:6px" });
+  r.actions = el("div", { className: "actions" });
+  r.log = el("pre", { className: "log", hidden: true });
+  r.plot = el("img", { className: "plot", hidden: true, alt: t("ui.plot.alt") });
+  const root = el("div", { className: "job" },
+    el("div", { className: "job-head" }, r.name, r.badge), r.meta, r.barWrap, r.stats, r.error, r.actions, r.log, r.plot);
+  return { root, r };
+}
+
+function button(text, cls, onclick) { return el("button", { type: "button", className: "small " + cls, textContent: text, onclick }); }
+async function act(id, verb) {
+  try { await api(`/api/models/${id}${verb === "delete" ? "" : "/" + verb}`, { method: verb === "delete" ? "DELETE" : "POST" }); }
+  catch (e) { alert(e.message); }
+  refresh();
+}
+async function loadLog(id) {
+  const { r } = cards.get(id);
+  const { lines } = await api(`/api/models/${id}/log`);
+  const atEnd = r.log.scrollTop + r.log.clientHeight >= r.log.scrollHeight - 20;
+  r.log.textContent = lines.join("\n") || t("ui.log.empty");
+  if (atEnd) r.log.scrollTop = r.log.scrollHeight;
+}
+function trainerText(m) {
+  if (m.params && m.params.trainer === "official") return t("ui.trainer.official_label", { version: m.trainer_version || "" }).trim();
+  const label = m.trainer_label || "";
+  return label + (m.trainer_version && !label.includes(m.trainer_version) ? ` v${m.trainer_version}` : "");
+}
+function epochsText(m) {
+  const p = m.params;
+  if (p.stage_mode === "two_stage") return t("ui.epochs_two", { a: p.epochs, b: p.stage2_epochs });
+  return p.epochs === 1 ? t("ui.epochs_one") : t("ui.epochs_n", { n: p.epochs });
+}
+
+function updateCard(m) {
+  let c = cards.get(m.id);
+  if (!c) { c = makeCard(); cards.set(m.id, c); }
+  const { r } = c;
+  const isJob = m.kind === "job";
+  const p = m.progress;
+  const where = `${PATHS.library_name}${m.folder ? " › " + m.folder.split("/").join(" › ") : ""}`;
+  r.name.textContent = m.name;
+  r.badge.className = "badge " + (isJob ? m.state : "done");
+  r.badge.textContent = !isJob ? t("ui.state.loose") : m.stopping ? t("ui.state.stopping") :
+    m.state === "queued" ? t("ui.state.queued_n", { n: m.queue_position }) : t(STATE_KEY[m.state]);
+
+  if (isJob) {
+    r.meta.textContent = `${m.input_name} → ${m.output_name} · ${trainerText(m)} · ${epochsText(m)} · batch ${m.params.batch_size}`;
+  } else {
+    r.meta.textContent = `${where} · ${fmtSize(m.model_size)} · ${fmtDate(m.created)}`;
+  }
+
+  const active = isJob && m.state === "running";
+  r.barWrap.hidden = !(active || (isJob && m.state === "done" && p));
+  if (p) r.bar.style.width = (m.state === "done" ? 100 : Math.min(100, (p.epoch + (p.batches ? p.batch / p.batches : 0)) / p.epochs * 100)) + "%";
+
+  const stats = [];
+  if (active && p) {
+    const epoch = Math.min(p.epoch + 1, p.epochs);
+    stats.push(p.stages > 1 ? t("ui.stat.stage_epoch", { stage: p.stage, stages: p.stages, epoch, epochs: p.epochs })
+                            : t("ui.stat.epoch", { epoch, epochs: p.epochs }));
+    if (p.esr != null) stats.push(t("ui.stat.esr", { esr: p.esr.toFixed(4), best: p.best_esr.toFixed(4) }));
+    stats.push(t("ui.stat.elapsed", { elapsed: fmtTime(p.elapsed_s), eta: fmtTime(p.eta_s) }));
+  } else if (active) stats.push(t("ui.stat.starting"));
+  if (isJob && m.state === "done") {
+    if (m.esr != null) stats.push(t("ui.stat.esr_final", { esr: m.esr.toFixed(4), label: esrLabel(m.esr) }));
+    if (m.stopped_early) stats.push(t("ui.stat.early"));
+    if (m.started && m.finished) stats.push(t("ui.stat.duration", { t: fmtTime(Math.round(m.finished - m.started)) }));
+    if (m.model_size) stats.push(`${fmtSize(m.model_size)}`);
+    stats.push(t("ui.stat.in", { where }));
+  }
+  r.stats.replaceChildren(...stats.map((s, i) => {
+    const span = el("span", { textContent: s });
+    if (isJob && m.state === "done" && i === 0 && m.esr != null) span.className = esrClass(m.esr);
+    return span;
+  }));
+  r.error.textContent = isJob && m.state === "failed" ? m.error : "";
+  r.error.hidden = !r.error.textContent;              // the retro skin draws the box even when empty: it looked like a second, dead progress bar
+
+  const acts = [];
+  if (isJob && m.state === "queued") acts.push(button(t("ui.act.cancel"), "danger", () => act(m.id, "cancel")));
+  if (active) {
+    acts.push(button(t("ui.act.stop_export"), "", () => act(m.id, "stop")));
+    acts.push(button(t("ui.act.cancel"), "danger", () => act(m.id, "cancel")));
+  }
+  if (m.has_model) acts.push(el("a", { className: "btn", href: `/api/models/${m.id}/model`, textContent: t("ui.act.download") }));
+  if (isJob && ["done", "failed", "cancelled"].includes(m.state) && m.wavs_ok)
+    acts.push(button(t("ui.act.retrain"), "", () => retrain(m)));
+  if (m.has_plot) acts.push(button(t(openPlots.has(m.id) ? "ui.act.hide_plot" : "ui.act.plot"), "", () => {
+    openPlots.has(m.id) ? openPlots.delete(m.id) : openPlots.add(m.id); updateCard(m);
+  }));
+  if (m.has_log) acts.push(button(t(openLogs.has(m.id) ? "ui.act.hide_log" : "ui.act.log"), "", () => {
+    openLogs.has(m.id) ? openLogs.delete(m.id) : openLogs.add(m.id);
+    updateCard(m);
+  }));
+  if (m.deletable) acts.push(button(t("ui.act.delete"), "danger", () =>
+    confirm(t("ui.act.delete_confirm", { name: m.name, lib: PATHS.library_name })) && act(m.id, "delete")));
+  r.actions.replaceChildren(...acts);
+
+  r.plot.alt = t("ui.plot.alt");
+  r.plot.hidden = !openPlots.has(m.id);
+  if (!r.plot.hidden && !r.plot.src) r.plot.src = `/api/models/${m.id}/plot`;
+  r.log.hidden = !openLogs.has(m.id);
+  if (openLogs.has(m.id) && (active || !r.log.textContent)) loadLog(m.id);
+  return c.root;
+}
+
+// --------------------------------------------------------- trainer updates
+let updSig = "";
+const dismissed = new Set();      // check results the user closed with "Annulla"
+const openFileLists = new Set();  // <details> the user expanded (survive re-renders)
+
+const fmtRelease = (i) => i && i.version ? `${i.version}${i.released ? " · " + i.released : ""}` : t("ui.upd.unknown_version");
+async function updCall(key, verb, body) {
+  try {
+    await api(`/api/updates/${key}/${verb}`, body
+      ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      : { method: "POST" });
+  } catch (e) { alert(e.message); }
+  refreshUpdates(true);
+}
+
+function fileList(key, report) {
+  const rows = [
+    ...report.modified.map((m) => `~ ${m.file}${m.plus != null ? `  (+${m.plus} −${m.minus})` : ""}`),
+    ...report.added.map((f) => `+ ${f}`),
+    ...report.removed.map((f) => `− ${f}`),
+  ];
+  const d = el("details", {}, el("summary", { textContent: t("ui.upd.file_list", { n: rows.length }) }),
+    el("ul", { className: "filelist" }, ...rows.map((r) => el("li", { textContent: r }))));
+  const id = key + ":files";
+  d.open = openFileLists.has(id);
+  d.addEventListener("toggle", () => { d.open ? openFileLists.add(id) : openFileLists.delete(id); });
+  return d;
+}
+
+function checkResult(key, tr, s) {
+  const c = tr.check;
+  if (!c || dismissed.has(`${key}:${c.checked_at}`)) return null;
+  if (c.status === "error") return el("div", { className: "upd-msg err", textContent: c.error });
+  const when = c.checked_at ? new Date(c.checked_at).toLocaleTimeString(locale(), { timeStyle: "short" }) : "";
+  const date = c.latest.published ? t("ui.upd.on_date", { date: c.latest.published }) : "";
+  if (c.status === "up_to_date") {
+    return el("div", { className: "upd-msg ok",
+      textContent: t("ui.upd.up_to_date", { version: c.latest.version, date, time: when, note: c.note ? " " + c.note : "" }) });
+  }
+  const box = el("div", { className: "upd-box" });
+  box.append(el("h3", { textContent: t("ui.upd.new_release", { version: c.latest.version, date, installed: c.installed.version || t("ui.upd.unknown") }) }));
+  if (c.notes) box.append(el("pre", { className: "notes", textContent: c.notes }));
+  const n = c.report.counts;
+  box.append(el("div", { textContent: t("ui.upd.files_summary", { modified: n.modified, added: n.added, removed: n.removed, unchanged: c.report.unchanged }) }));
+  if (n.modified + n.added + n.removed) box.append(fileList(key, c.report));
+  if (c.report.flag_count) {
+    const flags = el("div", { className: "flags" },
+      el("b", { textContent: t("ui.upd.flags_title", { n: c.report.flag_count }) }),
+      el("div", { className: "hint", textContent: t("ui.upd.flags_hint") }));
+    for (const f of c.report.flags.slice(0, 30))
+      flags.append(el("code", { textContent: `${t("ui." + f.kind)} — ${f.file}${f.line ? ":" + f.line : ""}${f.text ? "   " + f.text : ""}` }));
+    if (c.report.flag_count > 30) flags.append(el("div", { className: "hint", textContent: t("ui.upd.flags_more", { n: c.report.flag_count - 30 }) }));
+    box.append(flags);
+  }
+  if (c.unmet && c.unmet.length) {
+    box.append(el("div", { className: "unmet", textContent: t("ui.upd.unmet", { items: c.unmet.join("; ") }) }));
+  }
+  const acts = el("div", { className: "actions" });
+  const blocked = s.busy || s.jobs_active || (c.unmet && c.unmet.length);
+  const install = button(t("ui.upd.install_btn", { version: c.latest.version }), "primary", () => {
+    const current = c.installed.version || t("ui.upd.unknown");
+    if (confirm(t("ui.upd.install_confirm", { title: tr.title, version: c.latest.version, current }) +
+                (c.report.flag_count ? t("ui.upd.install_confirm_warn", { n: c.report.flag_count }) : "")))
+      updCall(key, "install", { target: c.latest.version });
+  });
+  install.disabled = !!blocked;
+  install.title = s.jobs_active ? t("ui.upd.jobs_active_title") : "";
+  acts.append(install, button(t("ui.act.cancel"), "", () => { dismissed.add(`${key}:${c.checked_at}`); updSig = ""; refreshUpdates(true); }));
+  box.append(acts);
+  return box;
+}
+
+function opResult(key, tr, s) {
+  const op = tr.last_op;
+  if (!op || (s.busy && s.task_name === key)) return null;
+  if (op.status === "error") return el("div", { className: "upd-msg err", textContent: t(op.kind === "restore" ? "ui.upd.op_error_restore" : "ui.upd.op_error_install", { error: op.error }) });
+  const from = op.from || t("ui.upd.unknown");
+  return el("div", { className: "upd-msg ok",
+    textContent: op.status === "installed"
+      ? t("ui.upd.op_installed", { version: op.version, from, backup: op.backup ? t("ui.upd.backup_suffix", { name: op.backup }) : "" })
+      : t("ui.upd.op_restored", { version: op.version, from }) });
+}
+
+function renderUpdates(s) {
+  const root = $("#updates");
+  root.replaceChildren(...Object.entries(s.trainers).map(([key, tr]) => {
+    const running = s.busy && s.task_name === key;
+    const check = button(running && s.task === "check" ? t("ui.upd.checking") : tr.button, "", () => { dismissed.clear(); updCall(key, "check"); });
+    check.disabled = s.busy;
+    const row = el("div", { className: "upd" },
+      el("div", { className: "upd-head" },
+        el("div", {}, el("div", { className: "upd-title", textContent: tr.title }),
+          el("div", { className: "meta", textContent: t("ui.upd.installed", { version: fmtRelease(tr.installed), repo: tr.repo }) })),
+        check));
+    if (running && s.task !== "check")
+      row.append(el("div", { className: "upd-msg", textContent: t(s.task === "install" ? "ui.upd.installing" : "ui.upd.restoring") }));
+    for (const part of [running ? null : checkResult(key, tr, s), opResult(key, tr, s)]) if (part) row.append(part);
+    if (tr.backups.length) {
+      const sel = el("select", {}, ...tr.backups.map((b) => el("option", { value: b.id, textContent: `${b.version}${b.installed ? " · " + b.installed.slice(0, 10) : ""}` })));
+      const restore = button(t("ui.upd.restore"), "", () => {
+        const b = tr.backups.find((x) => x.id === sel.value);
+        if (confirm(t("ui.upd.restore_confirm", { title: tr.title, version: b.version, current: tr.installed.version || t("ui.upd.unknown") })))
+          updCall(key, "restore", { backup: sel.value });
+      });
+      restore.disabled = s.busy || s.jobs_active;
+      row.append(el("div", { className: "backups" }, t("ui.upd.backups_label", { n: tr.backups.length }), sel, restore));
+    }
+    return row;
+  }));
+  const logBox = $("#updLog");
+  logBox.hidden = !s.log.length;
+  const atEnd = logBox.scrollTop + logBox.clientHeight >= logBox.scrollHeight - 20;
+  logBox.textContent = s.log.join("\n");
+  if (atEnd) logBox.scrollTop = logBox.scrollHeight;
+}
+
+async function refreshUpdates(force = false) {
+  try {
+    const s = await api("/api/updates");
+    const sig = JSON.stringify(s) + LANG;
+    if (sig === updSig && !force) return;
+    updSig = sig;
+    renderUpdates(s);
+  } catch (e) { /* the models refresh already reports an unreachable server */ }
+}
+
+// ----------------------------------------------------------- LAN switch / hardware
+let settings = { lan: true, port: 8765, addresses: [] };
+function renderSettings() {
+  $("#capsLocal").hidden = !settings.local_client;
+  $("#lanSwitch").checked = settings.lan;
+  $("#lanState").textContent = t(settings.lan ? "ui.lan.on" : "ui.lan.off");
+  $("#lanLabel").title = t("ui.lan.tip");
+  // One address only, big: whoever opens the trainer must see at once what to type in NAM Capture
+  const box = $("#lanInfo");
+  const address = settings.address || (settings.addresses || [])[0] || "";
+  if (settings.lan && address) {
+    const value = el("button", { type: "button", className: "lan-address", textContent: address, title: t("ui.lan.copy") });
+    value.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(address); value.textContent = t("ui.lan.copied"); setTimeout(() => { value.textContent = address; }, 1200); } catch {}
+    });
+    box.replaceChildren(el("span", { className: "lan-address-label", textContent: t("ui.lan.connect_to") }), value);
+  } else {
+    box.replaceChildren(document.createTextNode(t(settings.lan ? "ui.lan.no_address" : "ui.lan.local_only")));
+  }
+}
+async function refreshSettings() {
+  try { settings = await api("/api/settings"); renderSettings(); } catch {}
+}
+$("#lanSwitch").addEventListener("change", async (e) => {
+  const want = e.target.checked;
+  const remote = !["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+  const question = want ? t("ui.lan.confirm_on") : t(remote ? "ui.lan.confirm_off_remote" : "ui.lan.confirm_off");
+  if (!confirm(question)) { e.target.checked = !want; return; }
+  try {
+    settings = await api("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lan: want }) });
+  } catch (err) { alert(err.message); }
+  renderSettings();
+});
+
+function renderChip(g) {
+  const chip = $("#gpu");
+  if (!g) { chip.textContent = t("ui.hw.none"); return; }
+  if (g.kind === "cpu") chip.replaceChildren("CPU ", el("b", { textContent: g.name }), ` · ${t("ui.hw.no_gpu")}`);
+  else if (g.kind === "amd") chip.replaceChildren("GPU ", el("b", { textContent: g.name.replace(/^AMD /, "") }), " · AMD ROCm");
+  else if (g.kind === "mps") chip.replaceChildren("GPU ", el("b", { textContent: g.name }), " · Metal");
+  else chip.replaceChildren("GPU ", el("b", { textContent: g.name.replace("NVIDIA GeForce ", "") }),
+    ` · ${g.util}% · ${(g.mem_used / 1024).toFixed(1)}/${(g.mem_total / 1024).toFixed(0)} GB · ${g.temp}°C`);
+  const banner = $("#hwBanner");
+  banner.hidden = g.kind === "nvidia" || g.kind === "mps";
+  banner.textContent = g.kind === "cpu" ? t("ui.hw.cpu_banner") : g.kind === "amd" ? t("ui.hw.amd_note") : "";
+  banner.style.borderColor = "";
+}
+
+// ----------------------------------------------------------- files received from NAM Capture / already processed
+// One row per WAV that came from NAM Capture or that a training has already used: what it is, how good the capture was,
+// which input it was made with and what became of it (no training yet / queued / running / processed). The button fills the
+// new-training form with it.
+let capsSig = "", capsData = [];
+const CAP_STATES = { queued: "ui.caps.queued", running: "ui.caps.running", done: "ui.caps.done", failed: "ui.caps.failed", cancelled: "ui.caps.cancelled" };
+function capStatus(c) {
+  const runs = c.runs || [];
+  if (!runs.length) return ["", t("ui.caps.new")];
+  const state = (runs.find((r) => r.state === "running" || r.state === "queued") || runs.find((r) => r.state === "done") || runs[0]).state;
+  return [state, t(CAP_STATES[state] || "ui.caps.new")];
+}
+function capWarnNames(c) {
+  return c.warnings.map((w) => { const k = "ui.caps.w." + w; const v = t(k); return v === k ? w : v; }).join(", ");
+}
+function capRow(c) {
+  const [state, label] = capStatus(c);
+  const when = new Date(c.received * 1000).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" });
+  const lines = [el("div", { className: "meta", textContent: [when, t(c.from_capture ? "ui.caps.from_capture" : "ui.caps.manual"), fmtSize(c.size)].join(" · ") })];
+  const inputName = c.input_rel && wavs.files.some((f) => f.rel === c.input_rel) ? c.input_rel.split("/").pop() : "";
+  const facts = [];
+  if (c.levels) facts.push(t("ui.caps.levels", { i: c.levels.input_level_dbu ?? "–", o: c.levels.output_level_dbu ?? "–" }));
+  if (c.from_capture) facts.push(inputName ? t("ui.caps.input", { name: inputName }) : t("ui.caps.input_missing"));
+  if (c.esr != null) facts.push(t("ui.caps.esr", { v: c.esr.toFixed(4) }));
+  if (facts.length) lines.push(el("div", { className: "meta", textContent: facts.join(" · ") }));
+  if (c.warnings.length) lines.push(el("div", { className: "meta warn", textContent: t("ui.caps.warns", { list: capWarnNames(c) }) }));
+  if (c.runs.length) {
+    const list = c.runs.slice(0, 3).map((r) => `${r.name} (${t(CAP_STATES[r.state] || "ui.caps.new").toLowerCase()}${r.esr != null ? `, ESR ${r.esr.toFixed(4)}` : ""})`);
+    lines.push(el("div", { className: "meta", textContent: t("ui.caps.models", { list: list.join(" · ") + (c.runs.length > 3 ? " …" : "") }) }));
+  }
+  const use = el("button", { type: "button", className: "small", textContent: t("ui.caps.use") });
+  use.addEventListener("click", () => useCapture(c));
+  const del = el("button", { type: "button", className: "small danger", textContent: t("ui.caps.delete") });
+  del.addEventListener("click", async () => {
+    if (!confirm(t("ui.caps.delete_confirm", { name: c.name }))) return;
+    try { await api("/api/captures?rel=" + encodeURIComponent(c.rel), { method: "DELETE" }); capsSig = ""; refreshCaps(); }
+    catch (e) { alert(e.message); }
+  });
+  return el("div", { className: "cap-row" },
+    el("div", { className: "job-head" }, el("span", { className: "job-name", textContent: c.name }), el("span", { className: "badge " + state, textContent: label })),
+    ...lines, el("div", { className: "actions" }, use, del));
+}
+function useCapture(c) {
+  outputs = [{ kind: "lib", rel: c.rel }];
+  for (const k of ["input_level_dbu", "output_level_dbu"]) $("#" + k).value = c.levels && c.levels[k] != null ? c.levels[k] : "";
+  const input = $("#inputSelect");
+  if (c.input_rel && [...input.options].some((o) => o.value === c.input_rel)) { input.value = c.input_rel; rememberInput(c.input_rel); syncInputMode(); }
+  renderOutputs();
+  // a capture saved with warnings stops at the trainer's own data check unless that check is turned off: say so where the choice is made
+  const flagged = c.ok === false;
+  $("#retrainNote").hidden = !flagged;
+  if (flagged) $("#retrainText").textContent = t("ui.caps.flagged_note", { list: capWarnNames(c) || "?" });
+  $("#form").scrollIntoView({ behavior: "smooth" });
+}
+function renderCaps() {
+  $("#caps").replaceChildren(...capsData.map(capRow));
+  $("#capsEmpty").hidden = capsData.length > 0;
+}
+// Only on the PC that runs the trainer: open the folder the captures arrive in, and re-read the list (files deleted by hand disappear)
+$("#capsReveal").addEventListener("click", () => api("/api/captures/reveal", { method: "POST" }).catch((e) => alert(e.message)));
+$("#capsRefresh").addEventListener("click", async () => {
+  try { await loadWavs(true); } catch {}
+  capsSig = ""; refreshCaps().catch((e) => alert(e.message));
+});
+async function refreshCaps() {
+  const data = await api("/api/captures");
+  const sig = JSON.stringify([data, wavSig, LANG]);
+  if (sig === capsSig) return;
+  capsSig = sig; capsData = data;
+  renderCaps();
+}
+
+let tick = 0;
+async function refresh() {
+  refreshUpdates();
+  refreshCaps().catch(() => {});
+  try {
+    const [models, gpu] = await Promise.all([api("/api/models"), api("/api/gpu")]);
+    updateTubes(models);
+    const box = $("#jobs");
+    // Reconcile in place: re-attaching every node would reset the log's scroll position.
+    models.forEach((m, i) => {
+      const root = updateCard(m);
+      if (box.children[i] !== root) box.insertBefore(root, box.children[i] || null);
+    });
+    while (box.children.length > models.length) box.lastChild.remove();
+    for (const id of [...cards.keys()]) if (!models.some((m) => m.id === id)) cards.delete(id);
+    $("#empty").hidden = models.length > 0;
+    renderChip(gpu);
+    if (++tick % 5 === 0) {
+      refreshSettings();
+      if (document.activeElement !== $("#inputSelect") && document.activeElement !== $("#outputAdd")) loadWavs().catch(() => {});
+    }
+  } catch (e) {
+    $("#gpu").textContent = t("ui.hw.unreachable");
+  }
+}
+
+// ------------------------------------------------------- language switching
+async function setLanguage(lang) {
+  LANG = lang in LANGS ? lang : "en";
+  try { localStorage.setItem("lang", LANG); } catch {}
+  applyStatic();
+  cards.clear(); $("#jobs").replaceChildren();       // rebuild the model cards in the new language
+  updSig = ""; capsSig = "";
+  renderOutputs();
+  renderSettings();
+  try { await loadConfig(); await loadWavs(true); } catch {}
+  refresh();
+}
+$("#langSelect").addEventListener("change", (e) => setLanguage(e.target.value));
+
+(async function boot() {
+  buildTubes();
+  await loadI18n();
+  // First visit from this browser: use the language chosen when NAM was installed (else the browser's, see pickLang).
+  let saved = null;
+  try { saved = localStorage.getItem("lang"); } catch {}
+  if (!(saved in LANGS)) {
+    try {
+      const d = (await (await fetch("/api/config")).json()).default_language;
+      if (d in LANGS) LANG = d;
+    } catch {}
+  }
+  applyStatic();
+  try { await loadConfig(); await loadWavs(true); } catch {}
+  refreshSettings();
+  refresh();
+  setInterval(refresh, 2000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# --- build output and caches of the Suite (rebuilt by suite/build.py) ---
+/suite/cache/
+/suite/output/
+/suite/output-*/
+
+# --- user data of a development copy (never published) ---
+/trainer/NAM Generati/
+/trainer/File WAV caricati/
+/trainer/venv/
+/capture/venv/
+*.wav
+*.nam
+*.log
+*.tmp
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.claude/
+
+# --- .NET build output ---
+**/bin/
+**/obj/

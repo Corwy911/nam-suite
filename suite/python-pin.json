@@ -1,0 +1,13 @@
+{
+  "_comment": "python-build-standalone (astral-sh): the Python that ships inside NAM Suite on both systems. Pinned by release tag and sha256; change both together.",
+  "version": "3.12.14",
+  "tag": "20260929",
+  "windows": {
+    "file": "cpython-3.12.14+20260929-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+    "sha256": "f38e68f4d612ade6dd50c894fc80b14c0be0c3b5201145d6fff5f20b9323204d"
+  },
+  "macos": {
+    "file": "cpython-3.12.14+20260929-aarch64-apple-darwin-install_only_stripped.tar.gz",
+    "sha256": "1bb3e53d231ee2c8881e8daf6426f4dd95bff0dda496af0f3af300357aa998d0"
+  }
+}

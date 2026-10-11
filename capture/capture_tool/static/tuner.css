@@ -1,0 +1,54 @@
+/* The tuner (tuner.js): one dark glass display, shared by the live card of the capture tab and the NAM player. Same family as the readouts of the
+   player tab: black recessed strip, amber figures, red needle on a printed scale, lamps for flat / in tune / sharp. Loaded after player.css. */
+
+.tuner { margin: 14px 0 6px; }
+.tuner-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.tuner-src { font-size: 12.5px; color: var(--ink-soft); }
+.tuner-body { margin-top: 12px; }
+
+.tuner-glass {
+  position: relative; padding: 16px 20px 14px; border-radius: 3px; color: var(--paper);
+  background: linear-gradient(180deg, var(--strip1), var(--strip2));
+  box-shadow: inset 0 3px 8px #000, inset 0 0 0 1px #2c2c2a, 0 1px 0 rgba(255, 255, 255, .55);
+}
+.tuner-glass.idle .tuner-name b, .tuner-glass.idle .tuner-nums { opacity: .38; }       /* nothing playing: the last note fades out */
+.tuner-top { display: grid; grid-template-columns: 1fr minmax(120px, auto) 1fr; align-items: center; gap: 14px; }
+.tuner-name { text-align: center; line-height: 1; }
+.tuner-name b { font: 500 64px/1 var(--font-num); letter-spacing: .02em; color: #ffb86b; text-shadow: 0 0 10px rgba(255, 150, 50, .65), 0 0 2px rgba(255, 200, 120, .8); }
+.tuner-name sup { font: 500 22px var(--font-num); color: #c9a06a; margin-left: 2px; vertical-align: top; position: relative; top: 8px; }
+.tuner-name small { display: block; margin-top: 6px; font: 600 11px var(--font-head); letter-spacing: .2em; text-transform: uppercase; color: var(--paper-dim); min-height: 14px; }
+
+.tuner-lamp { justify-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 10.5px var(--font-head); letter-spacing: .16em; text-transform: uppercase; color: var(--paper-dim); }
+.tuner-lamp i { width: 22px; height: 22px; border-radius: 50%; background: #4a4a46; box-shadow: inset 0 0 0 1px #000; transition: background .08s, box-shadow .08s; }
+.tuner-lamp.flat.on i, .tuner-lamp.sharp.on i { background: radial-gradient(circle at 35% 30%, #ffd9a0, #f09a1f 55%, #8a5008); box-shadow: 0 0 10px 2px rgba(255, 160, 40, .6); }
+.tuner-lamp.ok.on i { background: radial-gradient(circle at 35% 30%, #d8ffb8, #5fd02a 55%, #2a6a0f); box-shadow: 0 0 12px 3px rgba(110, 230, 50, .65); }
+
+.tuner-scale {
+  position: relative; height: 42px; margin: 14px 4px 4px; border-radius: 3px;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .10), transparent 40%), linear-gradient(180deg, #3a4046, #161b20 48%, #242a30);
+  box-shadow: inset 0 0 10px #000, inset 0 0 0 2px #57565a;
+}
+.tuner-scale::before { content: ""; position: absolute; left: 3%; right: 3%; top: 8px; height: 14px;
+  background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 10%); opacity: .85; }
+.tuner-scale::after { content: ""; position: absolute; left: 3%; right: 3%; top: 17px; height: 5px;
+  background: repeating-linear-gradient(90deg, #e6e9ec 0 1px, transparent 1px 5%); opacity: .6; }
+.tuner-centre { position: absolute; left: 50%; top: 4px; bottom: 4px; width: 2px; margin-left: -1px; background: rgba(110, 230, 50, .75); box-shadow: 0 0 6px rgba(110, 230, 50, .6); }
+.tuner-labels { position: absolute; left: 3%; right: 3%; bottom: 3px; display: flex; justify-content: space-between; font: 500 9.5px var(--font-num); color: #aeb3b8; }
+.tuner-needle { position: absolute; top: 3px; bottom: 3px; left: 50%; width: 3px; margin-left: -1.5px; background: linear-gradient(#ff7a4a, var(--red)); box-shadow: 0 0 8px var(--red-glow);
+  transition: left .16s cubic-bezier(.2, .8, .3, 1); }
+.tuner-needle.ok { background: linear-gradient(#d8ffb8, #5fd02a); box-shadow: 0 0 9px rgba(110, 230, 50, .8); }
+
+.tuner-nums { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 26px; margin-top: 10px; font: 500 15px var(--font-num); color: #efeadb; }
+.tuner-nums small { font: 600 10.5px var(--font-head); letter-spacing: .14em; text-transform: uppercase; color: var(--paper-dim); margin-right: 6px; }
+.tuner-msg { margin-top: 10px; text-align: center; font-size: 13px; color: #f0c98a; min-height: 18px; }
+
+.tuner-ref { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.tuner-ref label { margin: 0; font: 600 10.5px var(--font-head); letter-spacing: .16em; text-transform: uppercase; }
+.tuner-ref .stepfine { width: 190px; }
+.tuner-ref .stepfine input { max-width: 80px; }
+
+@media (max-width: 560px) {
+  .tuner-top { grid-template-columns: 1fr; }
+  .tuner-lamp { flex-direction: row; }
+  .tuner-name b { font-size: 52px; }
+}

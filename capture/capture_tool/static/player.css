@@ -1,0 +1,77 @@
+/* NAM player tab (second tab of the page). Loaded after retro-plus.css: same family - grey units, black recessed strips, piano keys with a lamp,
+   amber figures in dark glass for the numbers to read at a glance. */
+
+/* ------------------------------------------------------------------ the two tabs: latching piano keys, one is always pressed */
+.tabs { display: flex; gap: 18px; padding: 4px 8px 6px; align-items: flex-end; }
+.tabs button { position: relative; min-width: 190px; padding: 12px 24px 13px; font-size: 13px; letter-spacing: .18em; display: inline-flex; align-items: center; justify-content: center; }
+.tabs button[aria-selected="true"] {
+  transform: translateY(3px); background: linear-gradient(180deg, #b6b092, #9c967a 60%, #857f66);
+  box-shadow: 0 1px 0 var(--key-edge), inset 0 2px 4px rgba(0, 0, 0, .35);
+}
+.lamp { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; background: #4a4a46; box-shadow: inset 0 0 0 1px #000; }
+.tabs .lamp { display: none; position: absolute; left: 16px; top: 50%; margin-top: -5px; }   /* the running lamp takes no room: both tabs stay identical */
+.tabs .lamp.on { display: inline-block; }
+.lamp.on { background: radial-gradient(circle at 35% 30%, #ffd0a0, var(--red) 55%, #8f200b); box-shadow: 0 0 9px 2px var(--red-glow); }
+
+/* ------------------------------------------------------------------ the calibration readouts */
+.pl-readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 14px; }
+.pl-readout {
+  position: relative; padding: 14px 18px 12px; border-radius: 3px; color: var(--paper);
+  background: linear-gradient(180deg, var(--strip1), var(--strip2));
+  box-shadow: inset 0 3px 8px #000, inset 0 0 0 1px #2c2c2a, 0 1px 0 rgba(255, 255, 255, .55);
+}
+.pl-readout.main { grid-column: span 2; box-shadow: inset 0 3px 8px #000, inset 0 0 0 2px var(--gold2), 0 1px 0 rgba(255, 255, 255, .55); }
+.pl-readout .lab { font: 600 10.5px var(--font-head); letter-spacing: .16em; text-transform: uppercase; color: var(--paper); margin-bottom: 4px; }
+.pl-readout .val { font: 500 40px/1.15 var(--font-num); letter-spacing: .02em; color: #ffb86b; text-shadow: 0 0 10px rgba(255, 150, 50, .65), 0 0 2px rgba(255, 200, 120, .8); }
+.pl-readout.main .val { font-size: 56px; }
+.pl-readout .val small { font: 500 17px var(--font-num); margin-left: 8px; color: #c9a06a; text-shadow: none; }
+.pl-readout.missing .val { color: #6f6a5f; text-shadow: none; }
+.pl-readout.missing .val small { display: none; }
+.pl-readout .sub { font-size: 12.5px; line-height: 1.4; color: var(--paper-dim); margin-top: 2px; }
+.pl-readout.missing .sub { color: #f0c98a; }
+.pl-readout button { position: absolute; top: 12px; right: 14px; }
+@media (max-width: 760px) { .pl-readout.main { grid-column: auto; } .pl-readout.main .val { font-size: 44px; } }
+
+/* ------------------------------------------------------------------ the fine stepper of the delay (the .stepper of the capture tab snaps to 0.5) */
+.stepfine { display: flex; gap: 8px; align-items: stretch; }
+.stepfine input { flex: 1 1 80px; min-width: 0; text-align: center; }
+.stepfine button { padding: 0 13px; font: 700 18px var(--font-num); letter-spacing: 0; flex: none; }
+
+/* ------------------------------------------------------------------ the routing, as two lanes: the real gear (A) and the model (B) */
+.pl-lanes { display: grid; gap: 10px; margin-bottom: 14px; }
+.pl-lane {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 12px 16px; border-radius: 3px; color: var(--paper);
+  background: linear-gradient(180deg, var(--strip1), var(--strip2)); opacity: .6;
+  box-shadow: inset 0 3px 8px #000, inset 0 0 0 1px #2c2c2a, 0 1px 0 rgba(255, 255, 255, .55); transition: opacity .15s;
+}
+.pl-lane.active { opacity: 1; box-shadow: inset 0 3px 8px #000, inset 0 0 0 2px var(--red), 0 0 12px var(--red-glow), 0 1px 0 rgba(255, 255, 255, .55); }
+.pl-lane .tag { font: 700 24px var(--font-head); width: 34px; flex: none; color: var(--paper); }
+.pl-node { padding: 4px 10px; border: 1px solid rgba(236, 232, 219, .25); border-radius: 3px; font: 500 12px var(--font-num); color: var(--paper); white-space: nowrap; }
+.pl-node.gain { color: #ffb86b; border-color: rgba(255, 184, 107, .4); }
+.pl-node.gear { color: #f0c98a; border-color: var(--gold2); letter-spacing: .1em; }
+.pl-node.end { background: rgba(227, 68, 29, .3); border-color: var(--red); }
+.pl-arrow { color: var(--gold2); font: 700 14px var(--font-num); }
+
+/* ------------------------------------------------------------------ the A/B keys: two big piano keys with a lamp, the heard one is pressed */
+.pl-keys { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin: 18px 0 10px; }
+.ab-key {
+  min-width: 240px; min-height: 124px; padding: 14px 22px 16px; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 2px;
+}
+.ab-key b { font: 700 58px/1 var(--font-head); letter-spacing: 0; }
+.ab-key small { font: 600 11px var(--font-head); letter-spacing: .18em; text-transform: uppercase; }
+.ab-key .lamp { width: 15px; height: 15px; }
+.ab-key[aria-pressed="true"] {
+  transform: translateY(4px); background: linear-gradient(180deg, #b6b092, #9c967a 60%, #857f66);
+  box-shadow: 0 1px 0 var(--key-edge), inset 0 2px 4px rgba(0, 0, 0, .35);
+}
+.ab-key[aria-pressed="true"] .lamp { background: radial-gradient(circle at 35% 30%, #ffd0a0, var(--red) 55%, #8f200b); box-shadow: 0 0 10px 3px var(--red-glow); }
+
+#plEditPanel { margin-top: 12px; }
+#plTrimKnobs { margin-top: 4px; }
+
+/* the setup card: room between the keys (each has its lamp above it) and the hints around them */
+#cardPlSetup > .check { margin: 28px 0 8px; }
+#cardPlSetup > .hint { margin: 6px 0 6px; }
+#plLiteWrap, #plPedalLiteWrap { margin-top: 18px; }      /* the key sits under the black EQ well: leave room for its lamp so it does not cross the frame */
+
+.clear-x { min-width: 34px; padding-left: 8px; padding-right: 8px; }      /* the X that takes a profile / IR away */

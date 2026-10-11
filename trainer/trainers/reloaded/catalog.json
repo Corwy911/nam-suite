@@ -1,0 +1,339 @@
+{
+ "entries": [
+  {
+   "value": "A2 Full+Lite",
+   "label": "A2 Full+Lite",
+   "group": "a2",
+   "lr": 0.004,
+   "lr_decay": 0.006
+  },
+  {
+   "value": "A2 Complex+Lite",
+   "label": "A2 Complex+Lite",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 Complex+RevYLo",
+   "label": "A2 Complex+RevYLo",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 Complex+Nano64x4",
+   "label": "A2 Complex+Nano64x4",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 Complex+Nano125x3",
+   "label": "A2 Complex+Nano125x3",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 Double-Lite",
+   "label": "A2 Double-Lite",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 xDouble-Lite",
+   "label": "A2 xDouble-Lite",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "A2 DoublePlus-Lite",
+   "label": "A2 DoublePlus-Lite",
+   "group": "a2",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "complex",
+   "label": "complex",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "standard",
+   "label": "standard",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "lite",
+   "label": "lite",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "feather",
+   "label": "feather",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "nano",
+   "label": "nano",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xstd",
+   "label": "xstd",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xstd3",
+   "label": "xstd3",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xhi3",
+   "label": "xhi3",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xHV_12",
+   "label": "xHV_12",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xHV_16",
+   "label": "xHV_16",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xHV24",
+   "label": "xHV_24",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "revyhi",
+   "label": "revyhi",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "revystd",
+   "label": "revystd",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "revylo",
+   "label": "revylo",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "revxstd",
+   "label": "revxstd",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "ComplexRF300",
+   "label": "ComplexRF300",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "ComplexRF300Lite",
+   "label": "ComplexRF300Lite",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "ComplexRF600",
+   "label": "ComplexRF600",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "ComplexRF600Lite",
+   "label": "ComplexRF600Lite",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xComplex",
+   "label": "xComplex",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xComplex Lite",
+   "label": "xComplexLite",
+   "group": "extended",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "LSTM Compressor HQ 48x3",
+   "label": "LSTM Compressor HQ",
+   "group": "lstm",
+   "lr": 0.00312,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "LSTM Compressor Light 30x3",
+   "label": "LSTM Compressor Lite",
+   "group": "lstm",
+   "lr": 0.00312,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "LSTM UHQ",
+   "label": "LSTM UHQ",
+   "group": "lstm",
+   "lr": 0.00312,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "LSTM TONEX-like 16",
+   "label": "LSTM TX 16",
+   "group": "lstm",
+   "lr": 0.00312,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "TONEX-like Causal Conv LSTM 128-16-2048",
+   "label": "LSTM TX CC",
+   "group": "lstm",
+   "lr": 0.0028,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "Tonex HQ",
+   "label": "TX HQ",
+   "group": "lstm",
+   "lr": 0.0028,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "ULTRA",
+   "label": "ULTRA",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "XHQ",
+   "label": "XHQ",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "UHQ",
+   "label": "UHQ",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "Nano64x4",
+   "label": "Nano64x4",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "Nano125x3",
+   "label": "Nano125x3",
+   "group": "light",
+   "lr": 0.004,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "double",
+   "label": "double",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "xDouble",
+   "label": "xDouble",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "yDouble",
+   "label": "yDouble",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  },
+  {
+   "value": "aComplex",
+   "label": "aComplex",
+   "group": "extended",
+   "lr": 0.003,
+   "lr_decay": 0.005
+  },
+  {
+   "value": "DoublePlus",
+   "label": "DoublePlus",
+   "group": "extended",
+   "lr": 0.00352,
+   "lr_decay": 0.0033
+  }
+ ],
+ "schedulers": [
+  "reduce_on_plateau",
+  "exponential",
+  "cosine_annealing",
+  "cosine_annealing_warm_restarts",
+  "warmup_cosine_decay",
+  "one_cycle",
+  "linear_warmup_reduce_on_plateau"
+ ],
+ "stage_modes": [
+  "single_stage",
+  "two_stage"
+ ],
+ "stage2_focus": [
+  "Lows",
+  "Mids",
+  "Highs"
+ ],
+ "version": "1.0.1",
+ "generated": "2026-09-20T04:26:39"
+}

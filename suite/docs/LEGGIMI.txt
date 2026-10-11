@@ -1,0 +1,34 @@
+NAM Suite
+=========
+
+Due programmi per i modelli Neural Amp Modeler, in un unico installatore:
+
+  NAM Trainer   addestra i modelli (.nam). Si apre con la sua icona sul desktop e resta attivo accanto
+                all'orologio di Windows (area di notifica). Da quell'icona: apri la pagina, apri le cartelle
+                dei modelli e dei WAV, "Avvia con Windows", "Esci" (col tasto destro). Uscire ferma tutto.
+  NAM Capture   cattura calibrata con la scheda audio (ASIO). Si apre con la sua icona e si chiude
+                definitivamente quando esci: niente resta in background.
+
+Dove sta cosa
+-------------
+  NAM Trainer    <cartella di installazione>\trainer\   modelli in "NAM Generati", WAV in "File WAV caricati"
+  NAM Capture    <cartella di installazione>\capture\   i suoi dati (catture, IR, modelli, calibrazioni):
+                 %LOCALAPPDATA%\NAM Capture
+  La cartella di installazione predefinita e' %LOCALAPPDATA%\Programs\NAM Suite (non servono i diritti di amministratore).
+
+Insieme
+-------
+  Con NAM Trainer installato, in NAM Capture imposta "Indirizzo del trainer" su  localhost  :
+  "Invia al NAM Trainer" manda la cattura (con i livelli in dBu) nella libreria del trainer, pronta per "Nuovo training".
+
+Rete (LAN)
+----------
+  La pagina del trainer si puo' usare anche da altri PC della rete (interruttore LAN nella pagina).
+  Alla prima esecuzione Windows chiede di consentire l'accesso di rete a Python: consentilo per usarlo dalla LAN.
+
+Disinstallare
+-------------
+  Impostazioni > App > NAM Suite > Disinstalla (oppure il collegamento nel menu Start).
+  Viene rimosso TUTTO: programmi, modelli, WAV, dati del catturatore, collegamenti, voci del registro e
+  (se vuoi) la regola del firewall. Prima di cancellare, il disinstallatore mostra quanti modelli e file ci sono
+  e chiede conferma: sono il tuo lavoro, non si recuperano.

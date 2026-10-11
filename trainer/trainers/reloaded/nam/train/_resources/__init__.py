@@ -1,0 +1,1 @@
+"""Training resource package."""

@@ -1,0 +1,766 @@
+# File: base.py
+# Created Date: Saturday February 5th 2022
+# Author: Steven Atkinson (steven@atkinson.mn)
+
+"""
+Implements the base PyTorch Lightning module.
+This is meant to combine an actual model (subclassed from `..models.base.BaseNet`)
+along with loss function boilerplate.
+
+For the base *PyTorch* model containing the actual architecture, see `..models.base`.
+"""
+
+import json as _json
+
+from dataclasses import dataclass as _dataclass
+from enum import Enum as _Enum
+from pathlib import Path as _Path
+from typing import (
+    Callable as _Callable,
+    Any as _Any,
+    Dict as _Dict,
+    List as _List,
+    NamedTuple as _NamedTuple,
+    Optional as _Optional,
+    Tuple as _Tuple,
+    Union as _Union,
+)
+
+import logging as _logging
+import pytorch_lightning as _pl
+import torch as _torch
+import torch.nn as _nn
+# import bitsandbytes as bnb
+
+from .._core import InitializableFromConfig as _InitializableFromConfig
+from .._dependencies import auraloss as _auraloss
+# Based on AIDA-X and GuitarML / CoreAudioML
+# Primary purpose is A-weighted + low-pass pre-emphasis filter
+from .._dependencies.auraloss.perceptual import PreEmph
+from ..models.base import BaseNet as _BaseNet
+from ..models.conv_net import ConvNet as _ConvNet
+from ..models.linear import Linear as _Linear
+from ..models.losses import (
+    apply_pre_emphasis_filter as _apply_pre_emphasis_filter,
+    esr as _esr,
+    multi_resolution_stft_loss as _multi_resolution_stft_loss,
+    mse as _mse,
+    mse_fft as _mse_fft,
+)
+from ..models.recurrent import LSTM as _LSTM
+from ..models.factory import init as _init_model, register as _register_model
+from ..models.wavenet import PackedWaveNet as _PackedWaveNet
+from ..models.wavenet import WaveNet as _WaveNet
+from ..util import init as _init
+
+logger = _logging.getLogger(__name__)
+
+
+class ValidationLoss(_Enum):
+    """
+    mse: mean squared error
+    esr: error signal ratio (Eq. (10) from
+        https://www.mdpi.com/2076-3417/10/3/766/htm
+        NOTE: Be careful when computing ESR on minibatches! The average ESR over
+        a minibatch of data not the same as the ESR of all of the same data in
+        the minibatch calculated over at once (because of the denominator).
+        (Hint: think about what happens if one item in the minibatch is all
+        zeroes...)
+    """
+
+    MSE = "mse"
+    ESR = "esr"
+    ESRPREEMPH = 'esrpreemph'
+
+
+class _CustomLoss(_NamedTuple):
+    weight: float
+    func: _Callable[[_torch.Tensor, _torch.Tensor], _torch.Tensor]
+
+
+@_dataclass
+class LossConfig(_InitializableFromConfig):
+    """
+    :param mse_weight: Weight for the MSE loss term. If None, MSE is not computed.
+    :param mrstft_weight: Multi-resolution short-time Fourier transform loss
+        coefficient. None means to skip; 2e-4 works pretty well if one wants to use it.
+    :param mask_first: How many of the first samples to ignore when computing the loss.
+    :param dc_weight: Weight for the DC loss term. If 0, ignored.
+    :params val_loss: Which loss to track for the best model checkpoint. If a string is
+        provided, then it must match the name of a custom loss.
+    :param pre_emph_coef: Coefficient of 1st-order pre-emphasis filter from
+        https://www.mdpi.com/2076-3417/10/3/766. Paper value: 0.95.
+    """
+
+    class ValLossNameError(ValueError):
+        """Error thrown when a validation loss name is invalid."""
+        pass
+
+    mse_weight: _Optional[float] = 1.0
+    mrstft_weight: _Optional[float] = None
+    fourier: bool = False
+    mask_first: int = 0
+    dc_weight: float = None
+    val_loss: _Union[ValidationLoss, str] = ValidationLoss.ESRPREEMPH
+    pre_emph_weight: _Optional[float] = None
+    pre_emph_coef: _Optional[float] = None
+    pre_emph_mrstft_weight: _Optional[float] = None
+    pre_emph_mrstft_coef: _Optional[float] = None
+    custom_losses: _Optional[_Dict[str, _CustomLoss]] = None
+
+    @classmethod
+    def parse_config(cls, config):
+        config = super().parse_config(config)
+
+        def parse_custom_losses(config):
+            def init_custom_loss(
+                name: str, kwargs: _Dict[str, _Any], weight: float
+            ) -> _CustomLoss:
+                func = _init(name, **kwargs)
+                return _CustomLoss(weight, func)
+
+            if "custom_losses" in config:
+                return {
+                    k: init_custom_loss(v["name"], v["kwargs"], v["weight"])
+                    for k, v in config["custom_losses"].items()
+                }
+            else:
+                return None
+
+        def parse_val_loss():
+            # TODO: Pydantic
+            value = config.get("val_loss", "mse")
+            try:
+                return ValidationLoss(value)
+            except ValueError:
+                # Now we need to check if it's a name of a custom loss
+                if value not in custom_losses:
+                    raise cls.ValLossNameError(f"Invalid validation loss: {value}")
+                return value
+
+        def get_mrstft_weight() -> _Optional[float]:
+            key = "mrstft_weight"
+            wrong_key = "mstft_key"  # Backward compatibility
+            if key in config:
+                if "mstft_weight" in config:
+                    raise ValueError(
+                        f"Received loss configuration with both '{key}' and "
+                        f"'{wrong_key}'. Provide only '{key}'."
+                    )
+                return config[key]
+            elif wrong_key in config:
+                logger.warning(
+                    f"Use of '{wrong_key}' is deprecated and will be removed in a future "
+                    f"version. Use '{key}' instead."
+                )
+                return config[wrong_key]
+            else:
+                return None
+
+        custom_losses = parse_custom_losses(config)
+        val_loss = parse_val_loss()
+        mrstft_weight = get_mrstft_weight()
+
+        return {
+            "fourier": config.get("fourier", False),
+            "mask_first": config.get("mask_first", 0),
+            "dc_weight": config.get("dc_weight"),
+            "val_loss": val_loss,
+            "pre_emph_coef": config.get("pre_emph_coef"),
+            "pre_emph_weight": config.get("pre_emph_weight"),
+            "mrstft_weight": mrstft_weight,
+            "pre_emph_mrstft_weight": config.get("pre_emph_mrstft_weight"),
+            "pre_emph_mrstft_coef": config.get("pre_emph_mrstft_coef"),
+            "custom_losses": custom_losses,
+        }
+
+    def apply_mask(self, *args):
+        """
+        :param args: (L,) or (B,)
+        :return: (L-M,) or (B, L-M)
+        """
+        return tuple(a[..., self.mask_first :] for a in args)
+
+
+class _LossItem(_NamedTuple):
+    weight: _Optional[float]
+    value: _Optional[_torch.Tensor]
+
+
+class LightningModule(_pl.LightningModule, _InitializableFromConfig):
+    """
+    The PyTorch Lightning Module that unites the model with its loss and
+    optimization recipe.
+    """
+
+    def __init__(
+        self,
+        net: _BaseNet,
+        optimizer_config: _Optional[dict] = None,
+        scheduler_config: _Optional[dict] = None,
+        loss_config: _Optional[LossConfig] = None,
+    ):
+        """
+        :param scheduler_config: contains
+            Required:
+            * "class"
+            * "kwargs"
+            Optional (defaults to Lightning defaults):
+            * "interval" ("epoch" of "step")
+            * "frequency" (int)
+            * "monitor" (str)
+        """
+        super().__init__()
+        self._net = net
+        self._optimizer_config = {} if optimizer_config is None else optimizer_config
+        self._scheduler_config = scheduler_config
+        self._loss_config = LossConfig() if loss_config is None else loss_config
+        self._mrstft = None  # Multi-resolution short-time Fourier transform loss
+        # Where to compute the MRSTFT.
+        # Keeping it on-device is preferable, but if that fails, then remember to drop
+        # it to cpu from then on.
+        self._mrstft_device: _Optional[_torch.device] = None
+
+    @classmethod
+    def init_from_config(cls, config):
+        checkpoint_path = config.get("checkpoint_path")
+        config = cls.parse_config(config)
+        return (
+            cls(**config)
+            if checkpoint_path is None
+            else cls.load_from_checkpoint(checkpoint_path, **config)
+        )
+
+    @classmethod
+    def parse_config(cls, config):
+        """
+        e.g.
+
+        {
+            "net": {
+                "name": "ConvNet",
+                "config": {...}
+            },
+            "loss": {
+                "dc_weight": 0.1
+            },
+            "optimizer": {
+                "lr": 0.0003
+            },
+            "lr_scheduler": {
+                "class": "ReduceLROnPlateau",
+                "kwargs": {
+                    "factor": 0.8,
+                    "patience": 10,
+                    "cooldown": 15,
+                    "min_lr": 1e-06,
+                    "verbose": true
+                },
+                "monitor": "val_loss"
+            }
+        }
+        """
+        config = super().parse_config(config)
+        net_config = config["net"]
+        # A little hacky--assumes "init_from_config"-style factory.
+        net = _init_model(
+            name=net_config["name"], kwargs={"config": net_config["config"]}
+        )
+        loss_config = LossConfig.init_from_config(config.get("loss", {}))
+        return {
+            "net": net,
+            "optimizer_config": config["optimizer"],
+            "scheduler_config": config["lr_scheduler"],
+            "loss_config": loss_config,
+        }
+
+    @classmethod
+    def register_net_initializer(cls, name, constructor, overwrite: bool = False):
+        logger.warning(f"Deprecated: use models.factory.register instead")
+        _register_model(name=name, constructor=constructor, overwrite=overwrite)
+
+    @property
+    def net(self) -> _nn.Module:
+        return self._net
+
+    def configure_optimizers(self):
+        optimizer = _torch.optim.Adam(self.parameters(), **self._optimizer_config)
+        # FIXME: Inconsistent ESR when using AdamW8bit
+        #optimizer = bnb.optim.AdamW8bit(self.parameters(), **self._optimizer_config)
+        if self._scheduler_config is None:
+            return optimizer
+
+        def with_lightning_keys(scheduler, config):
+            lr_scheduler_config = {"scheduler": scheduler}
+            for key in (
+                "interval",
+                "frequency",
+                "monitor",
+                "reduce_on_plateau",
+                "strict",
+                "name",
+            ):
+                if key in config:
+                    lr_scheduler_config[key] = config[key]
+            return lr_scheduler_config
+
+        scheduler_class = self._scheduler_config["class"]
+        scheduler_kwargs = dict(self._scheduler_config.get("kwargs") or {})
+        if scheduler_class == "WarmupCosineDecay":
+            warmup_epochs = max(0, int(scheduler_kwargs.pop("warmup_epochs", 0)))
+            total_epochs = max(1, int(scheduler_kwargs.pop("total_epochs", 1)))
+            start_factor = max(
+                1.0e-6, min(1.0, float(scheduler_kwargs.pop("start_factor", 0.10)))
+            )
+            eta_min = float(scheduler_kwargs.pop("eta_min", 0.0))
+            if warmup_epochs <= 0:
+                scheduler = _torch.optim.lr_scheduler.CosineAnnealingLR(
+                    optimizer,
+                    T_max=total_epochs,
+                    eta_min=eta_min,
+                )
+            else:
+                warmup = _torch.optim.lr_scheduler.LinearLR(
+                    optimizer,
+                    start_factor=start_factor,
+                    end_factor=1.0,
+                    total_iters=warmup_epochs,
+                )
+                cosine = _torch.optim.lr_scheduler.CosineAnnealingLR(
+                    optimizer,
+                    T_max=max(1, total_epochs - warmup_epochs),
+                    eta_min=eta_min,
+                )
+                scheduler = _torch.optim.lr_scheduler.SequentialLR(
+                    optimizer,
+                    schedulers=[warmup, cosine],
+                    milestones=[warmup_epochs],
+                )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": with_lightning_keys(scheduler, self._scheduler_config),
+            }
+
+        if scheduler_class == "OneCycleLR":
+            use_estimated = bool(
+                scheduler_kwargs.pop("use_estimated_stepping_batches", False)
+            )
+            fallback_total_steps = int(scheduler_kwargs.pop("fallback_total_steps", 1))
+            if use_estimated:
+                try:
+                    trainer = self.trainer
+                except Exception:
+                    trainer = None
+                estimated_batches = getattr(
+                    trainer, "estimated_stepping_batches", None
+                )
+                if isinstance(estimated_batches, int) and estimated_batches > 0:
+                    scheduler_kwargs["total_steps"] = estimated_batches
+                else:
+                    scheduler_kwargs["total_steps"] = max(1, fallback_total_steps)
+            scheduler = _torch.optim.lr_scheduler.OneCycleLR(
+                optimizer,
+                **scheduler_kwargs,
+            )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": with_lightning_keys(scheduler, self._scheduler_config),
+            }
+
+        if scheduler_class == "LinearWarmupReduceLROnPlateau":
+            warmup_epochs = max(0, int(scheduler_kwargs.pop("warmup_epochs", 0)))
+            start_factor = max(
+                1.0e-6, min(1.0, float(scheduler_kwargs.pop("start_factor", 0.10)))
+            )
+            plateau = _torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                **scheduler_kwargs,
+            )
+            plateau_config = dict(self._scheduler_config)
+            plateau_config["reduce_on_plateau"] = True
+            if warmup_epochs <= 0:
+                return {
+                    "optimizer": optimizer,
+                    "lr_scheduler": with_lightning_keys(plateau, plateau_config),
+                }
+            warmup = _torch.optim.lr_scheduler.LinearLR(
+                optimizer,
+                start_factor=start_factor,
+                end_factor=1.0,
+                total_iters=warmup_epochs,
+            )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": [
+                    {
+                        "scheduler": warmup,
+                        "interval": "epoch",
+                        "frequency": 1,
+                        "name": "Linear Warmup",
+                    },
+                    with_lightning_keys(plateau, plateau_config),
+                ],
+            }
+
+        lr_scheduler = getattr(
+            _torch.optim.lr_scheduler, scheduler_class
+        )(optimizer, **scheduler_kwargs)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": with_lightning_keys(lr_scheduler, self._scheduler_config),
+        }
+
+    def forward(self, *args, **kwargs):
+        return self.net(*args, **kwargs)  # TODO deprecate--use self.net() instead.
+
+    def on_load_checkpoint(self, checkpoint: _Dict[str, _Any]) -> None:
+        # Resolves https://github.com/sdatkinson/neural-amp-modeler/issues/351
+        self.net.sample_rate = checkpoint["sample_rate"]
+
+    def on_save_checkpoint(self, checkpoint: _Dict[str, _Any]) -> None:
+        # Resolves https://github.com/sdatkinson/neural-amp-modeler/issues/351
+        checkpoint["sample_rate"] = self.net.sample_rate
+
+    def _shared_step(
+        self, batch
+    ) -> _Tuple[_torch.Tensor, _torch.Tensor, _Dict[str, _LossItem]]:
+        """
+        B: Batch size
+        L: Sequence length
+
+        :return: (B,L), (B,L)
+        """
+        args, targets = batch[:-1], batch[-1]
+        preds = self(*args, pad_start=False)
+
+        return preds, targets, self._get_loss_dict(preds, targets)
+
+    def training_step(self, batch, batch_idx):
+        _, _, loss_dict = self._shared_step(batch)
+
+        loss = 0.0
+        for v in loss_dict.values():
+            if v.weight is not None and v.weight > 0.0:
+                loss = loss + v.weight * v.value
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        preds, targets, loss_dict = self._shared_step(batch)
+
+        def get_val_loss():
+            val_loss_type = self._loss_config.val_loss
+            if isinstance(val_loss_type, str):
+                val_loss_key_for_loss_dict = val_loss_type
+            else:
+                val_loss_key_for_loss_dict = {
+                    ValidationLoss.MSE: "MSE",
+                    ValidationLoss.ESR: "ESR",
+                    ValidationLoss.ESRPREEMPH: "ESRPREEMPH",
+                }[val_loss_type]
+            if val_loss_key_for_loss_dict in loss_dict:
+                return loss_dict[val_loss_key_for_loss_dict].value
+            else:
+                raise RuntimeError(
+                    f"Undefined validation loss routine for {val_loss_type}"
+                )
+
+        loss_dict["ESR"] = _LossItem(None, self._esr_loss(preds, targets))
+        loss_dict["ESRPREEMPH"] = _LossItem(
+            None, self._esr_loss(preds, targets, device=preds.device)
+        )
+        val_loss = get_val_loss()
+        logged_losses = {
+            "val_loss": val_loss,
+            **{key: value.value for key, value in loss_dict.items()},
+        }
+        if "Pre-emphasized MRSTFT" in loss_dict:
+            logged_losses["MRSTFTPREEMPH"] = loss_dict[
+                "Pre-emphasized MRSTFT"
+            ].value
+        self.log_dict(logged_losses)
+        return val_loss
+
+    def _esr_loss(self, preds: _torch.Tensor, targets: _torch.Tensor, device: _Optional[_torch.device] = None) -> _torch.Tensor:
+        """
+        Error signal ratio aka ESR loss.
+
+        Eq. (10), from
+        https://www.mdpi.com/2076-3417/10/3/766/htm
+
+        B: Batch size
+        L: Sequence length
+
+        :param preds: (B,L)
+        :param targets: (B,L)
+        :return: ()
+        """
+        if device:
+            # esr with A-weighted + LP pre-emphasis filter"""
+            pre_emph_filter = PreEmph(filter_type='awlp', fs=48000)
+            pre_emph_filter.to(device)
+            preds, targets = pre_emph_filter(preds, targets)
+            return _esr(preds, targets)
+        else:
+            return _esr(preds, targets)
+
+    def _get_loss_dict(self, preds, targets) -> _Dict[str, _LossItem]:
+        """Compute all of the losses."""
+        # Compute all relevant losses.
+        loss_dict = {}  # Mind keys versus validation loss requested...
+
+        def get_mse_loss():
+            if self._loss_config.mse_weight is None:
+                return
+
+            if self._loss_config.fourier:
+                loss_dict["MSE_FFT"] = _LossItem(1.0, _mse_fft(preds, targets))
+            else:
+                loss_dict["MSE"] = _LossItem(1.0, self._mse_loss(preds, targets))
+
+        get_mse_loss()
+
+        # Pre-emphasized MSE
+        if self._loss_config.pre_emph_weight is not None:
+            if (self._loss_config.pre_emph_coef is None) != (
+                self._loss_config.pre_emph_weight is None
+            ):
+                raise ValueError("Invalid pre-emph")
+            loss_dict["Pre-emphasized MSE"] = _LossItem(
+                self._loss_config.pre_emph_weight,
+                self._mse_loss(
+                    preds, targets, pre_emph_coef=self._loss_config.pre_emph_coef
+                ),
+            )
+        # Multi-resolution short-time Fourier transform loss
+        if self._loss_config.mrstft_weight is not None:
+            loss_dict["MRSTFT"] = _LossItem(
+                self._loss_config.mrstft_weight, self._mrstft_loss(preds, targets)
+            )
+        # Pre-emphasized MRSTFT
+        if self._loss_config.pre_emph_mrstft_weight is not None:
+            loss_dict["Pre-emphasized MRSTFT"] = _LossItem(
+                self._loss_config.pre_emph_mrstft_weight,
+                self._mrstft_loss(
+                    preds, targets, pre_emph_coef=self._loss_config.pre_emph_mrstft_coef
+                ),
+            )
+        # DC loss
+        dc_weight = self._loss_config.dc_weight
+        if dc_weight is not None and dc_weight > 0.0:
+            # Denominator could be a bad idea. I'm going to omit it esp since I'm
+            # using mini batches
+            mean_dims = _torch.arange(1, preds.ndim).tolist()
+            dc_loss = _nn.MSELoss()(
+                preds.mean(dim=mean_dims), targets.mean(dim=mean_dims)
+            )
+            loss_dict["DC MSE"] = _LossItem(dc_weight, dc_loss)
+
+        def get_custom_losses():
+            if self._loss_config.custom_losses is None:
+                return
+            for name, loss in self._loss_config.custom_losses.items():
+                loss_dict[name] = _LossItem(loss.weight, loss.func(preds, targets))
+
+        get_custom_losses()
+        return loss_dict
+
+    def _mse_loss(self, preds, targets, pre_emph_coef: _Optional[float] = None):
+        if pre_emph_coef is not None:
+            preds, targets = [
+                _apply_pre_emphasis_filter(z, pre_emph_coef) for z in (preds, targets)
+            ]
+        return _mse(preds, targets)
+
+    def _mrstft_loss(
+        self,
+        preds: _torch.Tensor,
+        targets: _torch.Tensor,
+        pre_emph_coef: _Optional[float] = None,
+    ) -> _torch.Tensor:
+        """
+        Experimental Multi Resolution Short Time Fourier Transform Loss using auraloss implementation.
+        B: Batch size
+        L: Sequence length
+
+        :param preds: (B,L)
+        :param targets: (B,L)
+        :return: ()
+        """
+        if self._mrstft is None:
+            self._mrstft = _auraloss.freq.MultiResolutionSTFTLoss()
+        backup_device = "cpu"
+
+        if pre_emph_coef is not None:
+            preds, targets = [
+                _apply_pre_emphasis_filter(z, pre_emph_coef) for z in (preds, targets)
+            ]
+
+        try:
+            return _multi_resolution_stft_loss(
+                preds, targets, self._mrstft, device=self._mrstft_device
+            )
+        except Exception as e:
+            if self._mrstft_device == backup_device:
+                raise e
+            logger.warning("MRSTFT failed on device; falling back to CPU")
+            self._mrstft_device = backup_device
+            return _multi_resolution_stft_loss(
+                preds, targets, self._mrstft, device=self._mrstft_device
+            )
+
+
+class PackedLightningModule(LightningModule):
+    """
+    Lightning module for packed WaveNet full/lite training.
+    """
+
+    @property
+    def net(self) -> _PackedWaveNet:
+        return self._net
+
+    def training_step(self, batch, batch_idx):
+        _, _, loss_dicts = self._shared_step(batch)
+        loss = 0.0
+        for loss_dict in loss_dicts:
+            for v in loss_dict.values():
+                if v.weight is not None and v.weight > 0.0:
+                    loss = loss + v.weight * v.value
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        preds, targets, loss_dicts = self._shared_step(batch)
+        logs = {}
+        val_losses = []
+
+        for i, loss_dict in enumerate(loss_dicts):
+            if "MSE" not in loss_dict:
+                loss_dict["MSE"] = _LossItem(
+                    None, self._mse_loss(preds[:, i, :], targets)
+                )
+            loss_dict["ESR"] = _LossItem(None, self._esr_loss(preds[:, i, :], targets))
+            loss_dict["ESRPREEMPH"] = _LossItem(
+                None, self._esr_loss(preds[:, i, :], targets, device=preds.device)
+            )
+            val_loss = self._get_val_loss_from_loss_dict(loss_dict)
+            val_losses.append(val_loss)
+            logs[f"val_loss_packed_{i}"] = val_loss
+            for key, item in loss_dict.items():
+                logs[f"{key}_packed_{i}"] = item.value
+
+        loss_keys = sorted({key for loss_dict in loss_dicts for key in loss_dict})
+        for key in loss_keys:
+            values = [
+                loss_dict[key].value for loss_dict in loss_dicts if key in loss_dict
+            ]
+            if values:
+                logs[key] = sum(values)
+        logs["val_loss"] = sum(val_losses)
+        self.log_dict(logs)
+        return logs["val_loss"]
+
+    def optimizer_step(self, *args, **kwargs):
+        out = super().optimizer_step(*args, **kwargs)
+        self.net.apply_mask()
+        return out
+
+    def _shared_step(
+        self, batch
+    ) -> _Tuple[_torch.Tensor, _torch.Tensor, _List[_Dict[str, _LossItem]]]:
+        args, targets = batch[:-1], batch[-1]
+        preds = self(*args, pad_start=False)
+        if preds.ndim != 3:
+            raise RuntimeError(
+                f"PackedWaveNet must return (B, P, L), got shape {tuple(preds.shape)}"
+            )
+        return (
+            preds,
+            targets,
+            [
+                self._get_loss_dict(preds[:, i, :], targets)
+                for i in range(preds.shape[1])
+            ],
+        )
+
+    def _get_val_loss_from_loss_dict(
+        self, loss_dict: _Dict[str, _LossItem]
+    ) -> _torch.Tensor:
+        val_loss_type = self._loss_config.val_loss
+        key = (
+            val_loss_type
+            if isinstance(val_loss_type, str)
+            else {
+                ValidationLoss.MSE: "MSE",
+                ValidationLoss.ESR: "ESR",
+                ValidationLoss.ESRPREEMPH: "ESRPREEMPH",
+            }[val_loss_type]
+        )
+        if key not in loss_dict:
+            raise RuntimeError(f"Undefined validation loss routine for {val_loss_type}")
+        return loss_dict[key].value
+
+
+class PackedMaskCallback(_pl.Callback):
+    """
+    Keep packed off-block weights exactly zero after optimizer updates.
+    """
+
+    def on_before_zero_grad(self, trainer, pl_module, optimizer) -> None:
+        if isinstance(getattr(pl_module, "net", None), _PackedWaveNet):
+            pl_module.net.apply_mask()
+
+
+class PackedBestCheckpoint(_pl.Callback):
+    """
+    Track one best full Lightning checkpoint for each packed submodel.
+    """
+
+    def __init__(self, dirpath: _Optional[_Path] = None):
+        super().__init__()
+        self.dirpath = None if dirpath is None else _Path(dirpath)
+        self.best: _Dict[int, _Dict[str, _Any]] = {}
+
+    @property
+    def checkpoint_paths(self) -> _List[_Optional[str]]:
+        if not self.best:
+            return []
+        n = max(self.best) + 1
+        return [self.best.get(i, {}).get("checkpoint_path") for i in range(n)]
+
+    def on_validation_end(self, trainer, pl_module) -> None:
+        if not isinstance(getattr(pl_module, "net", None), _PackedWaveNet):
+            return
+        if getattr(trainer, "sanity_checking", False):
+            return
+        pl_module.net.apply_mask()
+        dirpath = self.dirpath or _Path(trainer.default_root_dir)
+        dirpath.mkdir(parents=True, exist_ok=True)
+        for i, name in enumerate(pl_module.net.submodel_names):
+            key = f"val_loss_packed_{i}"
+            if key not in trainer.callback_metrics:
+                continue
+            metric_tensor = trainer.callback_metrics[key]
+            metric = float(metric_tensor.detach().cpu())
+            current_best = self.best.get(i, {}).get("best_metric")
+            if current_best is not None and metric >= current_best:
+                continue
+            checkpoint_path = dirpath / f"packed_best_submodel_{i}.ckpt"
+            trainer.save_checkpoint(checkpoint_path, weights_only=False)
+            self.best[i] = {
+                "submodel_index": i,
+                "submodel_name": name,
+                "best_metric": metric,
+                "epoch": int(trainer.current_epoch),
+                "step": int(trainer.global_step),
+                "checkpoint_path": str(checkpoint_path),
+            }
+        self._write_metadata(dirpath)
+
+    def _write_metadata(self, dirpath: _Path) -> None:
+        if not self.best:
+            return
+        with open(dirpath / "packed_best.json", "w") as fp:
+            _json.dump(
+                {"submodels": [self.best[i] for i in sorted(self.best)]},
+                fp,
+                indent=4,
+            )

@@ -1,0 +1,10 @@
+{
+ "name": "official",
+ "repo": "sdatkinson/neural-amp-modeler",
+ "kind": "pypi",
+ "version": "0.13.0",
+ "tag": "v0.13.0",
+ "sha256": "403531a815f23d2628c7afcf85c18a522db57838c36af44cf8b1e1048cc53129",
+ "released": "2026-06-02",
+ "installed": "2026-09-20T04:24:50"
+}

@@ -1,0 +1,47 @@
+# --- runtime data (never published) ---
+/venv/
+/capture_tool/tmp/
+/capture_tool/__pycache__/
+/capture_tool/settings.json
+/tests/__pycache__/
+*.wav
+*.nam
+*.log
+
+# --- packaging output (rebuilt by packaging/build_app.sh) ---
+/packaging/NAM Capture.app/
+/packaging/AppIcon.iconset/
+/packaging/icon_preview.png
+/packaging/build/
+
+# --- Windows packaging output/build artifacts (rebuilt by packaging/windows/build_app.ps1) ---
+/packaging/windows/output/
+/packaging/windows/packages/
+/packaging/windows/tools/
+/packaging/windows/NamCaptureApp/obj/
+/packaging/windows/NamCaptureApp/x64/
+/packaging/windows/build/
+
+# --- Python / editors ---
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.claude/
+.DS_Store
+/native/build/
+
+# --- AppleDouble sidecar junk (appears after copying the Mac project over a non-native filesystem) ---
+._*
+
+# --- Steinberg ASIO SDK (license forbids redistributing it; see native/third_party/ASIO_SDK_SETUP.md) ---
+/native/third_party/asio_sdk/
+
+# --- Visual Studio / MSBuild output, wherever it lands ---
+**/x64/
+**/Debug/
+**/Release/
+**/obj/
+*.tlog
+*.recipe
+.vs/

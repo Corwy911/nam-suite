@@ -1,0 +1,31 @@
+# --- runtime data of an installation (never published) ---
+/venv/
+/python/
+/NAM Generati/
+/File WAV caricati/
+/Backup/
+/_setup/
+nam-web/tmp/
+nam-web/cache/
+nam-web/data/
+nam-web/settings.json
+nam-web/hardware.json
+*.log
+*.tmp
+
+# --- what the installer build produces (several GB) ---
+/installer/cache/
+/installer/output/
+
+# --- Python / editors ---
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.claude/
+
+# --- audio and models are user data, not source ---
+*.wav
+*.nam
+# ...except the resources that ship inside the trainers (e.g. nam/models/_resources/loudness_input.wav)
+!/trainers/**/*.wav
