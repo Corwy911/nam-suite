@@ -169,6 +169,21 @@ def capture_levels(wav_path: Path) -> Optional[dict]:
     return out or None
 
 
+def capture_meta(wav_path: Path) -> Optional[dict]:
+    """What the page needs to treat a WAV as a capture sent by NAM Capture (a sidecar .json written by /nam-trainer/import):
+    it is a training OUTPUT (the reamp recording), never a DI/input file. None for an ordinary WAV."""
+    try:
+        data = json.loads(wav_path.with_suffix(".json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("metadata"), dict):
+        return None
+    gear = data["metadata"].get("gear_type")
+    return {"name": data.get("name") if isinstance(data.get("name"), str) else "",
+            "input_rel": data.get("input_rel") if isinstance(data.get("input_rel"), str) else "",
+            "gear_type": gear if isinstance(gear, str) else ""}
+
+
 def list_wavs() -> dict:
     files, folders = [], []
     for dirpath, dirnames, filenames in os.walk(WAV_DIR):
@@ -190,7 +205,7 @@ def list_wavs() -> dict:
             except OSError:
                 continue
             files.append({"rel": f"{rel_dir}/{name}" if rel_dir else name, "folder": rel_dir, "name": name,
-                          "size": st.st_size, "mtime": st.st_mtime, "capture_levels": capture_levels(path), **info})
+                          "size": st.st_size, "mtime": st.st_mtime, "capture_levels": capture_levels(path), "capture_meta": capture_meta(path), **info})
     return {"files": files, "folders": folders}
 
 

@@ -1,13 +1,14 @@
 """The input file (library folder, upload), and the takes: record, analyse, one folder per capture, accept, discard."""
 
 import json
+import shutil
 import subprocess
 import sys
 import threading
 import time
 import uuid
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import soundfile as sf
@@ -41,6 +42,24 @@ router = APIRouter()
 
 
 # --------------------------------------------------------------------------------- the input file
+
+def seed_standard_input(seed: Path) -> Optional[str]:
+    """The standard v3 input ships with the app (capture_tool/seed/input.wav) because the user's library lives outside it and starts empty. When the library
+    holds NO v3 input at all (a first start, or after the user removed it), the shipped one is copied into Input/. Never when the library already has one
+    (any name, any folder), never over an existing file. Returns the name it created, or None."""
+    if not seed.is_file() or find_v3_inputs():
+        return None
+    try:
+        if not describe_input_cached(seed)["v3"]:
+            return None
+    except Exception:
+        return None
+    dest_dir = _ctx["wav_dir"] / INPUT_FOLDER
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = _ctx["unique_file"](dest_dir / "input.wav")
+    shutil.copy2(seed, dest)
+    return dest.name
+
 
 def organize_library() -> dict:
     """One-off tidy-up of a library made before inputs and results had their own places (idempotent, cheap when there is

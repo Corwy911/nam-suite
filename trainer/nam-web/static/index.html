@@ -456,9 +456,11 @@ $("#stage_mode").addEventListener("change", syncStageMode);
 // ------------------------------------------------------------- WAV library
 const wavLabel = (f) => `${f.name} — ${f.duration}s, ${f.samplerate / 1000} kHz, ${fmtSize(f.size)}`;
 function groupLabel(folder) { return folder ? `${PATHS.wavs_name} › ${folder.split("/").join(" › ")}` : PATHS.wavs_name; }
-function wavGroups() {
+// A capture received from NAM Capture is an OUTPUT (the reamp recording): it never belongs in the input (DI) list.
+const isCapture = (f) => !!f.capture_meta;
+function wavGroups(files = wavs.files) {
   const groups = new Map();
-  for (const f of wavs.files) {
+  for (const f of files) {
     if (!groups.has(f.folder)) groups.set(f.folder, []);
     groups.get(f.folder).push(f);
   }
@@ -471,9 +473,10 @@ function rememberInput(rel) { try { if (rel && rel !== NEW) localStorage.setItem
 
 function rebuildWavControls() {
   const input = $("#inputSelect"), keep = input.value || lastInput();
-  input.replaceChildren(...wavGroups(), el("option", { value: NEW, textContent: t("ui.input.new") }));
+  const inputs = wavs.files.filter((f) => !isCapture(f));
+  input.replaceChildren(...wavGroups(inputs), el("option", { value: NEW, textContent: t("ui.input.new") }));
   const values = [...input.querySelectorAll("option")].map((o) => o.value);
-  input.value = values.includes(keep) ? keep : (wavs.files[0] ? wavs.files[0].rel : NEW);
+  input.value = values.includes(keep) ? keep : (inputs[0] ? inputs[0].rel : NEW);
   syncInputMode();
 
   const add = $("#outputAdd");
@@ -485,6 +488,30 @@ function rebuildWavControls() {
   $("#folderList").replaceChildren(...wavs.folders.map((f) => el("option", { value: f })));
   renderOutputs();
 }
+// A capture sent by NAM Capture shows up ready to train: queued as an output, with its levels, name and gear type filled in
+// and - when the library has it - the input file it was made with. Each capture is queued once (remembered per browser).
+function handledCaptures() { try { return new Set(JSON.parse(localStorage.getItem("capturesQueued") || "[]")); } catch { return new Set(); } }
+function queueReceivedCaptures() {
+  const done = handledCaptures();
+  const fresh = wavs.files.filter((f) => isCapture(f) && !done.has(f.rel)).sort((a, b) => a.mtime - b.mtime);
+  if (!fresh.length) return;
+  for (const f of fresh) {
+    done.add(f.rel);
+    if (!outputs.some((o) => o.kind === "lib" && o.rel === f.rel)) outputs.push({ kind: "lib", rel: f.rel });
+  }
+  try { localStorage.setItem("capturesQueued", JSON.stringify([...done])); } catch {}
+  const last = fresh[fresh.length - 1], meta = last.capture_meta, levels = last.capture_levels || {};
+  for (const k of ["input_level_dbu", "output_level_dbu"]) if (levels[k] != null) $("#" + k).value = levels[k];
+  if (meta.gear_type && [...$("#gear_type").options].some((o) => o.value === meta.gear_type)) $("#gear_type").value = meta.gear_type;
+  if (meta.name && !$("#name").value) $("#name").value = meta.name;
+  // the input the capture was made with: same path in this library, or the same file name anywhere in it
+  const base = (meta.input_rel || "").split("/").pop();
+  const match = wavs.files.find((f) => !isCapture(f) && (f.rel === meta.input_rel || (base && f.name === base)));
+  if (match) { $("#inputSelect").value = match.rel; rememberInput(match.rel); syncInputMode(); }
+  $("#retrainText").textContent = t(match ? "ui.capture.received" : "ui.capture.received_no_input", { name: last.capture_meta.name || last.name });
+  $("#retrainNote").hidden = false;
+  renderOutputs();
+}
 async function loadWavs(force = false) {
   const data = await api("/api/wavs");
   const sig = JSON.stringify([data.files.map((f) => [f.rel, f.size, f.mtime]), data.folders, LANG]);
@@ -492,6 +519,7 @@ async function loadWavs(force = false) {
   wavSig = sig;
   wavs = data;
   rebuildWavControls();
+  queueReceivedCaptures();
 }
 function syncInputMode() { $("#inputFile").hidden = $("#inputSelect").value !== NEW; }
 $("#inputSelect").addEventListener("change", () => { syncInputMode(); rememberInput($("#inputSelect").value); });

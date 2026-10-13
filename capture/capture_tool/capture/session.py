@@ -92,6 +92,9 @@ class EngineSession:
             elif kind == "progress":
                 self.progress.append(msg)
             elif kind == "op_done":
+                if msg.get("op") != self.op:
+                    continue       # a helper the engine stopped for a newer command: the session is already waiting
+                                   # on that newer op, and ITS op_done must be the one the waiter gets
                 self.op, self.op_result = None, msg
                 if not msg.get("ok"):
                     self.last_error = {"key": msg.get("error"), "detail": msg.get("detail")}
@@ -147,6 +150,7 @@ class EngineSession:
 
     def start_op(self, cmd: str, **params) -> None:
         """Start an operation; its outcome arrives as an op_done event (see wait_op / snapshot)."""
+        prev = self.op
         self._op_done.clear()
         self.op_result = None
         self.progress.clear()
@@ -154,7 +158,8 @@ class EngineSession:
         try:
             self.call(cmd, **params)
         except EngineError:
-            self.op = None
+            self.op = prev                  # the new op never started: the engine is still busy with the previous
+                                            # one, whose op_done must still be attributed (not dropped as stale)
             raise
 
     def wait_op(self, timeout: float = 60.0) -> dict:

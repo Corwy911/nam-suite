@@ -92,9 +92,21 @@ def _gains(cals: Optional[dict], model_in, model_out, use_model_levels: bool = T
         return {"feed": 0.0, "amp": 0.0, "pre": 0.0, "post": MANUAL_POST_DB, "model_levels": False, "amp_matched": False}
     g = cal.player_gains(cals["ci_guitar"], cals["ci_return"], cals["co"], model_in, model_out)
     out = {k: (0.0 if v is None else round(v, 2)) for k, v in g.items()}
-    if g.get("post") is None or g.get("pre") is None:
-        out["pre"], out["post"] = 0.0, MANUAL_POST_DB
+    # The model's two gains are worked out independently. A profile made from a HEAD capture carries only the input level (the head's return is a mic/DI,
+    # not calibrated): throwing the input level away too left the model's input at 0 dB, i.e. a guitar (Ci_guitar - model input) dB too hot in the model
+    # while the real head got its exact unity gain - heard as "the real head has much less gain" (found on a Marshall capture, 8 dB). Its output level is
+    # then taken to be the return's calibration: the model reproduces the recording, whose analog level was the return's, so leg B ends where leg A does.
+    pre_from_profile = g.get("pre") is not None
+    post_assumed = False
+    if g.get("pre") is None:
+        out["pre"] = 0.0
+    if g.get("post") is None:
+        if pre_from_profile and g.get("amp") is not None:
+            out["post"], post_assumed = out["amp"], True
+        else:
+            out["post"] = MANUAL_POST_DB
     out["model_levels"] = from_levels
+    out["pre_from_profile"], out["post_assumed"] = pre_from_profile, post_assumed
     out["amp_matched"] = g.get("amp") is not None          # False: the return input is not calibrated, the real gear's leg stays at 0 dB, unmatched
     return out
 

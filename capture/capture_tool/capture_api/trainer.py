@@ -4,7 +4,7 @@ Trainer in rete"). The page polls GET /trainer/status for the light; when it com
 Trainer" sends the capture as one JSON POST (the WAV bytes travel base64-encoded inside it - simplest possible
 contract, no multipart parsing needed on the trainer's side).
 
-nam-trainer-gui doesn't have this yet - it needs to expose, on TRAINER_PORT (same port its own web GUI already
+nam-trainer-gui exposes these two routes on TRAINER_PORT (same port its own web GUI already
 listens on - nam-web/start.ps1 hardcodes 8765 - these two routes are meant to live on that same FastAPI app, not a
 second server):
     GET  /nam-trainer/ping     -> any 2xx response means "I'm here"
@@ -103,7 +103,8 @@ def trainer_status():
     online = _is_online(host)
     # a wrong address is the commonest reason for "not found": say if a trainer answers on this very PC
     local = online if host in LOCAL_HOSTS else (not online and _is_online("localhost"))
-    return {"host": host or None, "online": online, "local_online": local}
+    # where the trainer's own page is (the same address the probe uses): the page shows it as a link to open it in the browser
+    return {"host": host or None, "online": online, "local_online": local, "url": f"http://{host}:{TRAINER_PORT}/" if host else None}
 
 
 class TrainerHostBody(BaseModel):

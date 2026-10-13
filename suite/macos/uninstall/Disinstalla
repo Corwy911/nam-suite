@@ -1,0 +1,62 @@
+#!/bin/bash
+# Disinstalla NAM Suite: counts what the user would lose, asks (default "No"), then removes everything NAM Suite put on
+# this Mac - the apps, the data folders, caches, preferences, the start-at-login entry - and forgets the packages.
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+LANG_CODE=en
+defaults read -g AppleLanguages 2>/dev/null | grep -qi '"\?it' && LANG_CODE=it
+t() { if [ "$LANG_CODE" = it ]; then echo "$1"; else echo "$2"; fi; }
+
+SUITE_APPS="/Applications/NAM Suite"
+SUPPORT="$HOME/Library/Application Support"
+TRAINER_DATA="$SUPPORT/NAM Suite"
+CAPTURE_DATA="$SUPPORT/NAM Capture"
+count() { [ -d "$1" ] && find "$1" -type f -iname "$2" 2>/dev/null | wc -l | tr -d ' ' || echo 0; }
+
+MODELS=$(count "$TRAINER_DATA" "*.nam")
+WAVS=$(( $(count "$TRAINER_DATA" "*.wav") + $(count "$CAPTURE_DATA" "*.wav") ))
+CAPTURES=$(find "$CAPTURE_DATA" -name capture.json 2>/dev/null | wc -l | tr -d ' ')
+
+if [ ! -d "$SUITE_APPS" ] && [ ! -d "$TRAINER_DATA" ] && [ ! -d "$CAPTURE_DATA" ]; then
+  osascript -e "display dialog \"$(t "NAM Suite non risulta installata." "NAM Suite does not seem to be installed.")\" buttons {\"OK\"} default button 1" >/dev/null 2>&1
+  exit 0
+fi
+
+MSG="$(t "Rimuovere NAM Suite da questo Mac?" "Remove NAM Suite from this Mac?")
+
+$(t "Verranno cancellati per sempre:" "These will be deleted for good:")
+ • $MODELS $(t "modelli NAM generati" "NAM models")
+ • $WAVS $(t "file WAV" "WAV files")
+ • $CAPTURES $(t "catture di NAM Capture (con calibrazioni e impostazioni)" "NAM Capture captures (with calibrations and settings)")
+
+$(t "Le app, le cartelle dei dati, le cache e le preferenze vengono tolte. Questa azione non si può annullare." "The apps, data folders, caches and preferences are removed. This cannot be undone.")"
+ANSWER=$(osascript <<OSA 2>/dev/null
+button returned of (display dialog "$MSG" buttons {"$(t "No" "No")", "$(t "Rimuovi tutto" "Remove everything")"} default button 1 with icon caution)
+OSA
+)
+[ "$ANSWER" = "$(t "Rimuovi tutto" "Remove everything")" ] || exit 0
+
+# the start-at-login entry and anything of ours still running
+launchctl bootout "gui/$(id -u)/com.namsuite.trainer" >/dev/null 2>&1
+rm -f "$HOME/Library/LaunchAgents/com.namsuite.trainer.plist"
+for app in "NAM Trainer" "NAM Capture"; do      # a polite quit, and only if it is running (quitting an app that is not running would launch it)
+  pgrep -f "/Applications/NAM Suite/$app.app/" >/dev/null 2>&1 && osascript -e "tell application \"$app\" to quit" >/dev/null 2>&1
+done
+sleep 2
+
+# user files (no privileges needed)
+rm -rf "$TRAINER_DATA" "$CAPTURE_DATA"
+for id in com.namsuite.trainer com.romanasanov.namcapture; do
+  rm -rf "$HOME/Library/Caches/$id" "$HOME/Library/Preferences/$id.plist" "$HOME/Library/WebKit/$id" \
+         "$HOME/Library/HTTPStorages/$id" "$HOME/Library/Saved Application State/$id.savedState"
+done
+rm -rf "$HOME/Library/Logs/NAM Suite"
+
+# the apps in /Applications/NAM Suite belong to root (the installer made them): one administrator prompt
+FORGET="pkgutil --forget com.namsuite.suite; pkgutil --forget com.namsuite.trainer; pkgutil --forget com.namsuite.capture; pkgutil --forget com.namsuite.common"
+osascript -e "do shell script \"rm -rf '$SUITE_APPS'; $FORGET\" with administrator privileges" >/dev/null 2>&1
+if [ -d "$SUITE_APPS" ]; then
+  osascript -e "display dialog \"$(t "Le app in /Applications/NAM Suite non sono state rimosse (serve la password dell'amministratore)." "The apps in /Applications/NAM Suite were not removed (the administrator password is needed).")\" buttons {\"OK\"} default button 1" >/dev/null 2>&1
+  exit 1
+fi
+osascript -e "display dialog \"$(t "NAM Suite è stata rimossa." "NAM Suite has been removed.")\" buttons {\"OK\"} default button 1" >/dev/null 2>&1
+exit 0

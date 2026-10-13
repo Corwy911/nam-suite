@@ -241,6 +241,11 @@ class Engine:
                 "peak_dbfs": cal.to_db(float(np.max(np.abs(mono)))), "timing": timing}
 
     OPS = ("tone", "meter", "measure", "return_cal", "linearity", "click_probe", "record")
+    # The helpers that only listen: any new command (another operation, open, devices) stops them instead of being
+    # refused, and runs right after their op_done (Roman: "se clicco su calibra il tono di prova si deve spegnere" -
+    # the page's own stop-then-start has a poll-lag race, so the engine must not depend on it). Real operations
+    # still refuse each other: a calibration or a take must not be killed by a stray click.
+    YIELDING = ("tone", "meter")
 
     def run_op(self, cmd: str, params: dict) -> None:
         """Runs on the main thread. The command was answered {"started"} by the reader; the outcome is an op_done event."""
@@ -337,6 +342,9 @@ class Engine:
                     raise AudioError("unknown_command", cmd)
                 if cmd == "close":
                     self.op_stop.set()                                 # closing while something plays: fade it out first
+                elif self.busy and self.op_name in self.YIELDING:
+                    self.op_stop.set()                                 # the helper ends; this command is queued below
+                                                                       # and runs as soon as its op_done is announced
                 elif self.busy:
                     raise AudioError("busy", self.op_name or "")
                 if cmd in self.OPS:

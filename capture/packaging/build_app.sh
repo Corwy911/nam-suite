@@ -12,9 +12,14 @@ cd "$(dirname "$0")/.."       # project root
 ROOT="$(pwd)"
 PKG="$ROOT/packaging"
 VERSION="$(tr -d '[:space:]' < "$ROOT/../suite/VERSION")"      # the Suite's version (suite/VERSION), one number for every app
-APP="$PKG/NAM Capture.app"
+[ -n "${NAM_SUITE_VERSION:-}" ] && VERSION="$NAM_SUITE_VERSION"
+APP="${NAM_APP_OUT:-$PKG/NAM Capture.app}"          # NAM_APP_OUT: where the Suite build wants it
+# Suite build (suite/macos/build_mac.sh): NAM_SUITE_PYTHON = the pinned standalone Python folder, NAM_SUITE_SITE = its packages.
+# Without them the development venv/ is bundled, as before.
+SUITE_PYTHON="${NAM_SUITE_PYTHON:-}"
+SUITE_SITE="${NAM_SUITE_SITE:-}"
 
-if [ ! -x "$ROOT/venv/bin/python" ]; then
+if [ -z "$SUITE_PYTHON" ] && [ ! -x "$ROOT/venv/bin/python" ]; then
   echo "Manca venv/: esegui prima  bash setup-mac.sh"
   exit 1
 fi
@@ -25,7 +30,7 @@ fi
 
 echo "== icona =="
 if [ ! -f "$PKG/AppIcon.icns" ]; then
-  venv/bin/python "$PKG/make_icon.py"
+  python3 "$PKG/make_icon.py"
 fi
 
 echo "== pulizia build precedente =="
@@ -57,6 +62,13 @@ echo "== copia del programma (capture_tool/) =="
 mkdir -p "$APP/Contents/Resources/app"
 rsync -a --exclude '__pycache__' --exclude 'tmp' --exclude '*.pyc' "$ROOT/capture_tool/" "$APP/Contents/Resources/app/"
 
+if [ -n "$SUITE_PYTHON" ]; then
+echo "== Python fisso + pacchetti (Suite) =="
+rsync -a --exclude '__pycache__' --exclude '*.pyc' --exclude 'test' --exclude 'idlelib' --exclude 'turtledemo' --exclude 'ensurepip' \
+  --exclude '/lib/python*/site-packages' "$SUITE_PYTHON/" "$APP/Contents/Resources/python/"
+mkdir -p "$APP/Contents/Resources/python/lib/python3.12/site-packages"
+rsync -a --exclude '__pycache__' "$SUITE_SITE/" "$APP/Contents/Resources/site/"
+else
 echo "== copia dell'ambiente Python (venv/, solo quello che serve a runtime) =="
 # The venv also holds development-only packages: scipy (nothing imports it), reportlab/pypdfium2/PIL (only manuale/ builds
 # the PDFs), pip, and httpx2/httpcore2 (only the tests' TestClient). Left out of the app: it goes from ~150 MB to ~40 MB.
@@ -66,6 +78,7 @@ rsync -a --exclude '__pycache__' --exclude '*.pyc' \
   --exclude '/lib/python*/site-packages/pip' --exclude '/lib/python*/site-packages/pip-*' \
   --exclude '/lib/python*/site-packages/httpx2*' --exclude '/lib/python*/site-packages/httpcore2*' \
   "$ROOT/venv/" "$APP/Contents/Resources/venv/"
+fi
 
 echo
 echo "Fatto: \"$APP\""

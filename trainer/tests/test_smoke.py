@@ -130,6 +130,7 @@ class AppTest(unittest.TestCase):
             self.assertEqual(result["bad_base64"], 400)
             self.assertTrue(result["sidecar"])
             self.assertEqual([f["capture_levels"] for f in result["wavs"]], [{"input_level_dbu": 5.8, "output_level_dbu": 12.6}])
+            self.assertEqual([f["capture_meta"] for f in result["wavs"]], [{"name": "t", "input_rel": "Input/input.wav", "gear_type": "pedal"}])   # the page keeps captures out of the input list
             self.assertFalse((WEB.parent / "File WAV caricati" / "Da NAM Capture" / "t.wav").exists(), "nothing may be written next to the program")
 
 

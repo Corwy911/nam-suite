@@ -24,12 +24,17 @@
 html { min-height: 100%; }
 body {
   font-family: var(--font-body); font-size: 15px; line-height: 1.5; color: var(--ink); min-height: 100vh;
+  background: #dcc49d;
+}
+/* light oak parquet (planks are in parquet.svg) on a fixed layer of its own: `background-attachment: fixed` makes WebKit
+   repaint the whole page at every scroll step (the app's window dropped to ~5 frames/s), a position:fixed layer is painted
+   once and only composited */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
     linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
     radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
-    url("/parquet.svg") 0 0 / 480px 360px,
-    #dcc49d;                                   /* light oak parquet: planks are in parquet.svg */
-  background-attachment: fixed;
+    url("/parquet.svg") 0 0 / 480px 360px;
 }
 
 /* ------------------------------------------------------------------ layout: fluid, fills the window */
@@ -106,7 +111,8 @@ a { color: #7a1f08; }
 table.report td, table.lin th, table.lin td { border-bottom-color: rgba(0, 0, 0, .18); }
 table.lin th { color: var(--ink-soft); font-family: var(--font-head); letter-spacing: .06em; }
 details.report summary, summary { color: #7a1f08; }
-.locked { opacity: 1; filter: saturate(.5) brightness(.8); }          /* dimmed by filter only: opacity would let the cabinet show through the metal */
+.locked { box-shadow: inset 0 0 0 999px rgba(30, 30, 28, .22), inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 0 0 2px var(--champagne), 0 14px 24px rgba(0, 0, 0, .65); }   /* a darker veil, not a CSS filter (a filter on big cards makes WebKit scroll at half speed) */
+.locked > :not(h2):not(.lock-note) { opacity: .65; }
 
 /* ------------------------------------------------------------------ black recessed strips, printed in white */
 .card .row, .card > .field {

@@ -265,6 +265,27 @@ class PlayerApiTests(unittest.TestCase):
             self.assertAlmostEqual(started["gains"]["amp"], CI_RETURN - CO, delta=0.01)    # the gear's leg does not depend on the model
             self.post("/native/player/stop")
 
+    def test_04b_a_head_profile_with_only_the_input_level_still_gets_its_calibrated_input(self):
+        """The real case that was heard: a head capture writes input_level_dbu (the send) and no output level (the return is a mic/DI). The model's
+        input used to fall to 0 dB - the guitar (CI_GUITAR - MODEL_IN) dB too hot in the model against the real head. Now the input comes from the
+        profile and the output is matched to the calibrated return, i.e. to leg A."""
+        self.open_both_inputs()
+        with FakeNativeEngine({**self.NATIVE_REPLIES, "/model": {"ok": True, "input_level_dbu": MODEL_IN, "output_level_dbu": None}}) as fake:
+            started = self.post("/native/player/start", self.start_body())
+            g = started["gains"]
+            self.assertAlmostEqual(g["pre"], CI_GUITAR - MODEL_IN, delta=0.01)             # from the profile, not 0 dB
+            self.assertAlmostEqual(g["post"], CI_RETURN - CO, delta=0.01)                  # = leg A: both legs leave on the same level
+            self.assertEqual(g["post"], g["amp"])
+            self.assertTrue(g["pre_from_profile"] and g["post_assumed"])
+            self.assertFalse(g["model_levels"])                                            # the profile is still not complete
+            self.post("/native/player/stop")
+
+    def test_04c_the_same_profile_without_a_calibrated_return_keeps_the_output_by_hand(self):
+        g = self.capture_api.player._gains({"co": CO, "ci_guitar": CI_GUITAR, "ci_return": None}, MODEL_IN, None)
+        self.assertAlmostEqual(g["pre"], CI_GUITAR - MODEL_IN, delta=0.01)
+        self.assertEqual(g["post"], 0.0)                                                    # nothing to match it to: by hand
+        self.assertTrue(g["pre_from_profile"]); self.assertFalse(g["post_assumed"]); self.assertFalse(g["amp_matched"])
+
     def test_05_swap_recomputes_the_model_gains_and_moves_the_cabinet(self):
         self.open_both_inputs()
         (self.model_dir / "Other.nam").write_text("{}")
@@ -341,7 +362,7 @@ class PlayerApiTests(unittest.TestCase):
                 by.setdefault(path, []).append(body)
             self.assertEqual(by["/model"][0]["legs"], ["B", "A"])                                # a second copy of the amp for the real pedal's return
             self.assertEqual(by["/ir"][0]["legs"], ["B", "A"])                                   # the cabinet is part of the amp stage: both legs
-            self.assertEqual(by["/pedal_model"][0]["path"], str(self.model_dir / "Pedal.nam"))
+            self.assertEqual(by["/pedal_model"][0]["path"], str((self.model_dir / "Pedal.nam").resolve()))      # resolved: macOS temp folders sit behind a /var -> /private/var link
             self.assertEqual(by["/pedal_controls"], [{"pre_db": round(CI_GUITAR - self.PEDAL_IN, 2), "post_db": 0.0}])
             self.assertEqual(by["/amp_pregain"], [{"gain_db": round(CI_RETURN - MODEL_IN, 2)}])
             self.assertEqual(by["/gain"], by["/amp_gain"])                                       # same output gain (master -18 dB added) on both

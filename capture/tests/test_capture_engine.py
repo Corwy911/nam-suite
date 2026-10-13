@@ -151,9 +151,26 @@ class EngineTests(unittest.TestCase):
         self.assertTrue(result["stopped"])
         self.s.call("sim", speed=0)
 
-    def test_second_operation_while_busy_is_refused(self):
+    def test_a_helper_yields_to_a_new_operation(self):
+        # Roman: "se clicco su calibra il tono di prova si deve spegnere". The engine stops the helper itself and
+        # queues the new command - even when the page's stop-then-start loses the race with its own state polling -
+        # and the session must hand the waiter the NEW op's done event, never the killed helper's.
+        import time
         self.s.call("sim", speed=60, route="loopback")
         self.s.start_op("tone", level_dbfs=-30.0)
+        time.sleep(0.4)                                  # the tone is really running, not just accepted
+        self.s.start_op("measure", level_dbfs=-12.0)     # a short real operation, not meter (meter never ends alone)
+        r = self.s.wait_op(30)
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["op"], "measure")             # the measure's own done event, not the tone's
+        self.assertAlmostEqual(r["result"]["peak_dbfs"], 14.3 - 12.0 - 9.2, delta=0.05)
+        self.s.call("sim", speed=0)
+
+    def test_a_real_operation_still_refuses_company(self):
+        self.s.call("sim", speed=60, route="loopback", latency=1056)
+        src = self.tmp / "input-refuse.wav"
+        write_fake_input(src)
+        self.s.start_op("record", input_path=str(src), save_path=str(self.tmp / "take-refuse.npy"), extra_frames=48_000)
         with self.assertRaises(EngineError) as e:
             self.s.start_op("meter")
         self.assertEqual(e.exception.key, "busy")

@@ -4,6 +4,8 @@ import types
 import unittest
 from unittest import mock
 
+import numpy as np
+
 import _helpers  # noqa: F401  (puts nam-web on sys.path)
 from capture import backends
 from capture.backends import AsioBackend, AudioError, CoreAudioBackend
@@ -182,10 +184,76 @@ class AsioBufferTests(unittest.TestCase):
         b.open("asio:0", [0], [0], 48_000, 0)                                  # automatic: the driver's own size
         self.assertEqual(b.blocksize, 96)
 
-    def test_core_audio_is_untouched(self):
+    def test_core_audio_keeps_the_requested_size(self):
         b = make(CoreAudioBackend, [dev("Fireface", 18, 18)])
         self.assertEqual(b.resolve_blocksize(0, 128), 128)
+        self.assertEqual(b._suggested_latency(), "low")             # until a size is set on the backend (open)
+
+
+class CoreAudioBufferTests(unittest.TestCase):
+    """The buffer chosen on the page has to reach the driver on macOS too (1083 samples of round trip "at 64" on a Fireface UC whose own panel said 512:
+    PortAudio does not touch the device's buffer unless told it may), and the page has to show what the driver really has, not what was asked."""
+    DEVICES = [dev("Fireface", 18, 18)]
+
+    def test_an_explicit_buffer_lets_portaudio_set_exactly_that_size(self):
+        b = make(CoreAudioBackend, self.DEVICES)
+        b._probe = lambda rate, blocksize: None
+        b.open("coreaudio:0", [0], [0], 48_000, 64)
+        self.assertTrue(all(s.kw.get("change_device_parameters") for s in b._extra))
+        self.assertEqual(b.blocksize, 64)
+        seen = {}
+        b.sd.Stream = lambda **kw: seen.update(kw) or FakeStream(**kw)
+        b._make_stream(lambda *a: None)
+        self.assertEqual(seen["blocksize"], 64)
+        self.assertAlmostEqual(seen["latency"], 64 / 48_000)       # one buffer of buffering target, not the word "low" (PortAudio then picked 448 for 64)
+
+    def test_automatic_keeps_the_buffer_the_interface_has_now(self):
+        b = make(CoreAudioBackend, self.DEVICES)
+        b._probe = lambda rate, blocksize: None
+        with mock.patch.object(backends.coreaudio_info, "buffer_frames", return_value=512):
+            b.open("coreaudio:0", [0], [0], 48_000, 0)
+        self.assertEqual(b.blocksize, 512)                          # handed on as an explicit size, so PortAudio does not move it
+        self.assertAlmostEqual(b._suggested_latency(), 512 / 48_000)
+
+    def test_automatic_with_no_answer_from_core_audio_leaves_everything_to_portaudio(self):
+        b = make(CoreAudioBackend, self.DEVICES)
+        b._probe = lambda rate, blocksize: None
+        with mock.patch.object(backends.coreaudio_info, "buffer_frames", return_value=None):
+            b.open("coreaudio:0", [0], [0], 48_000, 0)
+        self.assertEqual(b.blocksize, 0)
         self.assertEqual(b._suggested_latency(), "low")
+        self.assertTrue(all("change_device_parameters" not in s.kw for s in b._extra))
+
+    def _open_with_real_probe(self, granted, asked=64):
+        b = make(CoreAudioBackend, self.DEVICES)
+        streams = []
+
+        def stream(**kw):
+            s = FakeStream(**kw)
+            streams.append(s)
+            return s
+
+        def tick(seconds):                                   # the interface "delivers" blocks while the probe waits
+            for s in streams:
+                for _ in range(6):
+                    s.kw["callback"](None, np.zeros((64, 1), dtype=np.float32), 64, None, None)
+
+        b.sd.Stream = stream
+        with mock.patch.object(backends.time, "sleep", tick), mock.patch.object(backends.coreaudio_info, "buffer_frames", return_value=granted):
+            b.open("coreaudio:0", [0], [0], 48_000, asked)
+        return b
+
+    def test_the_page_gets_the_buffer_the_driver_really_has(self):
+        self.assertEqual(self._open_with_real_probe(512).info()["blocksize"], 512)      # asked 64, the panel still says 512: say so
+        self.assertEqual(self._open_with_real_probe(64).info()["blocksize"], 64)
+
+    def test_without_an_answer_from_core_audio_the_request_is_shown(self):
+        self.assertEqual(self._open_with_real_probe(None).info()["blocksize"], 64)
+
+    def test_reading_an_unknown_device_gives_none(self):
+        from capture import coreaudio_info
+        self.assertIsNone(coreaudio_info.buffer_frames("no such device"))
+        self.assertIsNone(coreaudio_info.buffer_frames(""))
 
 
 class PlatformChoiceTests(unittest.TestCase):

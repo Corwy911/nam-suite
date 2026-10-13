@@ -9,6 +9,7 @@ trainer_host = ""       the hostname/IP of the PC running nam-trainer-gui, probe
 import json
 import os
 import socket
+import sys
 import threading
 import time
 from pathlib import Path
@@ -16,7 +17,12 @@ from typing import List
 
 import fsutil
 
-SETTINGS_FILE = Path(__file__).resolve().parent / "settings.json"
+if os.environ.get("NAM_CAPTURE_DATA", "").strip():      # a test run keeps its settings apart from the real ones
+    SETTINGS_FILE = Path(os.environ["NAM_CAPTURE_DATA"].strip()).expanduser() / "settings.json"
+elif sys.platform == "darwin":        # inside a signed .app nothing may change: the per-user settings live with the other per-user data
+    SETTINGS_FILE = Path.home() / "Library" / "Application Support" / "NAM Capture" / "settings.json"
+else:
+    SETTINGS_FILE = Path(__file__).resolve().parent / "settings.json"
 DEFAULTS = {"lan": True, "trainer_host": ""}
 
 _lock = threading.Lock()

@@ -5,8 +5,17 @@
 
 import Cocoa
 import WebKit
+import AVFoundation
 
 let PORT = "8766"
+
+// The per-user data folder: NAM_CAPTURE_DATA (a test run, see the 'test' folder) or the standard one.
+func dataDirURL() -> URL {
+    if let custom = ProcessInfo.processInfo.environment["NAM_CAPTURE_DATA"], !custom.isEmpty {
+        return URL(fileURLWithPath: (custom as NSString).expandingTildeInPath)
+    }
+    return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/NAM Capture")
+}
 let BASE_URL = "http://127.0.0.1:\(PORT)/"
 
 final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDelegate {
@@ -20,11 +29,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDe
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         buildWindow()
+        requestMicrophone()            // before the first "Apri la scheda": while the system prompt is still
+                                       // pending, PortAudio fails the input side with a generic paInternalError
         startServer()
         controlServer.start()          // the native real-time engine's local control API (127.0.0.1:8767); the
                                         // Python server proxies /api/capture/native/* to it - see capture_api.py
         waitForServer(triesLeft: 60)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // macOS gates the input side of every interface behind the microphone permission, and PortAudio's only symptom
+    // of a missing one is the generic paInternalError (-9986), indistinguishable from a driver problem. Ask at
+    // launch, so the system prompt is answered long before the user reaches "Apri la scheda" - and if it was
+    // denied, say so plainly instead of letting the first open fail with a cryptic error.
+    func requestMicrophone() {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                if !granted { DispatchQueue.main.async { self.microphoneDenied() } }
+            }
+        case .denied, .restricted:
+            microphoneDenied()
+        default:
+            break
+        }
+    }
+
+    func microphoneDenied() {
+        let alert = NSAlert()
+        alert.messageText = "Permesso microfono mancante / Missing microphone permission"
+        alert.informativeText = "NAM Capture non può aprire gli ingressi della scheda. Consenti il microfono in Impostazioni sistema → Privacy e sicurezza → Microfono e riapri l'app.\n\nNAM Capture cannot open the interface's inputs. Allow the microphone in System Settings → Privacy & Security → Microphone and reopen the app."
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     func buildWindow() {
@@ -45,6 +81,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDe
         webView.loadHTMLString(loadingHTML(), baseURL: nil)
         window.contentView = webView
         window.makeKeyAndOrderFront(nil)
+    }
+
+    // A link with target="_blank" (the NAM guide, the trainer's own page) asks the web view for a new window: with no answer it does nothing at
+    // all. The page's own address never changes; anything that wants a window goes to the system browser instead.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction,
+                 windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if let url = navigationAction.request.url, url.scheme == "http" || url.scheme == "https" {
+            NSWorkspace.shared.open(url)
+        }
+        return nil
     }
 
     // WKWebView has no built-in JavaScript dialogs: without these, confirm() silently returns false and every
@@ -113,8 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDe
         panel.message = "Scegli una cartella con catture già fatte da esportare"
         panel.prompt = "Scegli"
         // always starts from the library's own Catture folder - that's where a finished capture normally lives
-        let defaultDir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/NAM Capture/File WAV caricati/Catture")
+        let defaultDir = dataDirURL().appendingPathComponent("File WAV caricati/Catture")
         panel.directoryURL = defaultDir
         if panel.runModal() == .OK, let url = panel.url {
             callPageFunction("trainerBrowseFolder", path: url.path)
@@ -158,14 +203,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDe
 
     func startServer() {
         let res = resourcePath()
-        let python = res + "/venv/bin/python"
+        // Two layouts: the Suite's (a pinned standalone Python in python/ + its packages in site/) or the development
+        // build's own venv/ (see build_app.sh).
+        let suitePython = res + "/python/bin/python3"
+        let suiteLayout = FileManager.default.fileExists(atPath: suitePython)
+        let python = suiteLayout ? suitePython : res + "/venv/bin/python"
         let appPy = res + "/app/app.py"
         guard FileManager.default.fileExists(atPath: python) else {
             webView.loadHTMLString(loadingHTML("Errore: manca " + python + ". Ricompila con packaging/build_app.sh."), baseURL: nil)
             return
         }
-        let logDir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/NAM Capture")
+        let logDir = dataDirURL()
         try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
         let logURL = logDir.appendingPathComponent("app.log")
         FileManager.default.createFile(atPath: logURL.path, contents: nil)
@@ -175,6 +223,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, NSMenuDe
         proc.executableURL = URL(fileURLWithPath: python)
         proc.arguments = [appPy, "--port", PORT]
         proc.currentDirectoryURL = URL(fileURLWithPath: res + "/app")
+        if suiteLayout {
+            var env = ProcessInfo.processInfo.environment
+            env["PYTHONPATH"] = res + "/site"
+            env["PYTHONNOUSERSITE"] = "1"
+            proc.environment = env
+        }
         if let h = logHandle {
             proc.standardOutput = h
             proc.standardError = h

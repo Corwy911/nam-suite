@@ -513,22 +513,48 @@ class ApiTests(unittest.TestCase):
         self.assertFalse((catture / "input.wav").exists())
         self.assertEqual(self.capture_api.organize_library(), {"inputs": [], "results": []})     # idempotent
 
+    def test_20b_the_standard_input_that_ships_with_the_app_is_seeded_only_when_the_library_has_none(self):
+        from unittest import mock
+        takes = self.capture_api.takes
+        seed = self.wav_dir.parent / "seed-input.wav"
+        seed.write_bytes((self.wav_dir / "Test" / "input.wav").read_bytes())
+        with mock.patch.object(takes, "find_v3_inputs", return_value=[{"rel": "Input/x.wav", "name": "x.wav"}]):
+            self.assertIsNone(takes.seed_standard_input(seed))                      # the library already has one: nothing is added
+        with mock.patch.object(takes, "find_v3_inputs", return_value=[]):
+            self.assertIsNone(takes.seed_standard_input(self.wav_dir.parent / "no-such-seed.wav"))
+            name = takes.seed_standard_input(seed)                                  # an empty library: the shipped one is copied into Input/
+            self.assertTrue((self.wav_dir / "Input" / name).is_file())
+            self.assertEqual((self.wav_dir / "Input" / name).read_bytes(), seed.read_bytes())
+            again = takes.seed_standard_input(seed)                                 # never over an existing file
+            self.assertNotEqual(again, name)
+            self.assertTrue((self.wav_dir / "Input" / name).is_file())
+
+    def test_20c_the_shipped_standard_input_really_is_the_v3(self):
+        shipped = Path(self.capture_api.__file__).resolve().parent.parent / "seed" / "input.wav"
+        if not shipped.is_file():
+            self.skipTest("the standard input is not part of the public source tree (suite/publish.py leaves it out); the installers carry it")
+        # the md5 written out here, not al.INPUT_V3_MD5: this class swaps that one for its synthetic stand-in
+        self.assertEqual(hashlib.md5(shipped.read_bytes()).hexdigest(), "36cd1af62985c2fac3e654333e36431e")
+
+    def url(self, host):
+        return f"http://{host}:{self.capture_api.trainer.TRAINER_PORT}/"
+
     def test_21_trainer_host_and_status_detect_it_live_on_the_network(self):
         self.post("/trainer/host", {"host": ""}, expect=400)
         self.settings.update(trainer_host="")
-        self.assertEqual(self.get("/trainer/status"), {"host": None, "online": False, "local_online": False})
+        self.assertEqual(self.get("/trainer/status"), {"host": None, "online": False, "local_online": False, "url": None})
         # nothing listens on the trainer's port yet: setting the host still works, just reports offline
         r = self.post("/trainer/host", {"host": "127.0.0.1"})
         self.assertEqual(r, {"host": "127.0.0.1", "online": False})
-        self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": False, "local_online": False})
+        self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": False, "local_online": False, "url": self.url("127.0.0.1")})
         # once something answers its ping, the same address reports online
         with FakeTrainer():
-            self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": True, "local_online": True})
-        self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": False, "local_online": False})   # gone again after the fake stops
+            self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": True, "local_online": True, "url": self.url("127.0.0.1")})
+        self.assertEqual(self.get("/trainer/status"), {"host": "127.0.0.1", "online": False, "local_online": False, "url": self.url("127.0.0.1")})   # gone again after the fake stops
         # a wrong address while a trainer answers on this PC: offline, but the page is told that "localhost" would work
         self.settings.update(trainer_host="192.0.2.1")                                          # TEST-NET: nothing answers there
         with FakeTrainer():
-            self.assertEqual(self.get("/trainer/status"), {"host": "192.0.2.1", "online": False, "local_online": True})
+            self.assertEqual(self.get("/trainer/status"), {"host": "192.0.2.1", "online": False, "local_online": True, "url": self.url("192.0.2.1")})
 
     def test_21b_the_address_is_cleaned_of_what_the_trainer_page_used_to_show(self):
         for typed, kept in (("192.168.1.230", "192.168.1.230"), ("http://192.168.1.230:8765", "192.168.1.230"), ("https://192.168.1.230:8765/", "192.168.1.230"),

@@ -37,6 +37,8 @@ The installer carries software that is installed offline:
 - **Microsoft Visual C++ Redistributable 2015-2022 (x64)** and **Microsoft Edge WebView2 Runtime** — Microsoft's redistribution terms (each is installed only
   if the PC does not have it).
 - **Inno Setup** (the installer's tool) — Jordan Russell's / Martijn Laan's license.
+- **macOS package** (`NAM-Suite-macOS.pkg`): the same Python 3.12 and pinned packages for Apple Silicon (`suite/locks/requirements-macos.lock`), PyTorch with Metal (MPS), the .NET 8 runtime and Avalonia for the menu-bar launcher; no Microsoft components.
+- **NAM's standard v3 `input.wav`** (the test signal every capture plays): it ships inside the installers and is copied into the user's library on first start. It is the file of the Neural Amp Modeler project (see its documentation), not code of this repository, and it is not part of the source tree published here.
 
 This project is independent and is not affiliated with or endorsed by any of the above.
 

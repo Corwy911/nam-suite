@@ -335,7 +335,8 @@ def sha_big(path):
 
 def dotnet() -> Path:
     """The .NET 8 SDK that builds the launcher, installed by Microsoft's own script into cache\dotnet (nothing is installed on the PC)."""
-    exe = CACHE / "dotnet" / ("dotnet.exe" if TARGET == "windows" else "dotnet")
+    home = CACHE / ("dotnet" if TARGET == "windows" else "dotnet-macos")     # a cache folder carried over from the other system must not be mistaken for this one
+    exe = home / ("dotnet.exe" if TARGET == "windows" else "dotnet")
     if exe.exists():
         return exe
     scripts = CACHE / "dotnet-install"
@@ -350,7 +351,7 @@ def dotnet() -> Path:
     else:
         script = scripts / "dotnet-install.sh"
         urllib.request.urlretrieve("https://dot.net/v1/dotnet-install.sh", script)
-        run(["bash", script, "--channel", "8.0", "--install-dir", CACHE / "dotnet", "--no-path"])
+        run(["bash", script, "--channel", "8.0", "--install-dir", home, "--no-path"])
     return exe
 
 
@@ -380,8 +381,8 @@ if __name__ == "__main__":
     opts = ap.parse_args()
     if opts.target:
         TARGET = opts.target
-    if TARGET == "macos":
-        raise SystemExit("the macOS package is built on a Mac: see suite/macos/MAC-HANDOFF.md")
+    if TARGET == "macos" and opts.step not in ("launcher",):
+        raise SystemExit("on macOS only the launcher is built here; the package comes from suite/macos/build_mac.sh")
     only = opts.variants.split(",") if opts.variants else None
     if opts.step == "all":
         for name in ("tools", "launcher", "runtime", "trainer", "variants", "capture", "extras", "iss"):

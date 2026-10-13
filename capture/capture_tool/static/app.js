@@ -1198,15 +1198,17 @@ $("#resDiscard").addEventListener("click", async () => { try { await post("/api/
 // the light is green. window.trainerSetHost / window.trainerBrowseFolder are called only from packaging/main.swift's
 // File menu, after a native dialog gets a real folder path or the trainer's address - nothing on the page itself
 // triggers these.
-function setLamp(dotSel, textSel, online, host, local) {
+function setLamp(dotSel, textSel, online, host, local, url) {
   $(dotSel).className = "dot " + (online ? "ok" : "");
   $(textSel).textContent = t(online ? "cap.trainer.online" : "cap.trainer.offline") + (host ? ` (${host})` : "") + (!online && local ? " " + t("cap.trainer.local_hint") : "");
+  // the trainer's own page, to open in the browser (the app's shell hands target=_blank links to the system browser)
+  if (online && url) $(textSel).append(" ", t("cap.trainer.open_label") + " ", el("a", { href: url, target: "_blank", rel: "noopener", textContent: url }));
 }
 function renderTrainerStatus() {
   const s = S.trainerStatus;
   const online = !!(s && s.online);
-  setLamp("#recTrainerDot", "#recTrainerText", online, s && s.host, s && s.local_online);
-  setLamp("#resTrainerDot", "#resTrainerText", online, s && s.host, s && s.local_online);
+  setLamp("#recTrainerDot", "#recTrainerText", online, s && s.host, s && s.local_online, s && s.url);
+  setLamp("#resTrainerDot", "#resTrainerText", online, s && s.host, s && s.local_online, s && s.url);
   $("#resSendTrainer").hidden = !online;
   document.querySelectorAll("#trainerList [data-sendable]").forEach((btn) => { btn.disabled = !online || btn.dataset.sendable !== "1"; });
 }

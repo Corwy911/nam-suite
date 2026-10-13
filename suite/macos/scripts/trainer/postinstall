@@ -1,0 +1,28 @@
+#!/bin/bash
+# Runs as root. Writes what the Windows installer's suite_setup.py writes: which accelerator this installation uses
+# (the Apple GPU) and the language, in the console user's Trainer data folder; and tells an already installed
+# Capture where the Trainer is.
+USER_NAME="$(stat -f%Su /dev/console)"
+HOME_DIR="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+[ -n "$HOME_DIR" ] || exit 0
+LANG_CODE=en
+sudo -u "$USER_NAME" defaults read -g AppleLanguages 2>/dev/null | grep -qi '"\?it' && LANG_CODE=it
+CHIP="$(sysctl -n machdep.cpu.brand_string 2>/dev/null)"
+DIR="$HOME_DIR/Library/Application Support/NAM Suite/Trainer/state"
+mkdir -p "$DIR"
+cat > "$DIR/hardware.json" <<JSON
+{
+ "variant": "mps",
+ "chip": "$CHIP",
+ "language": "$LANG_CODE",
+ "installed": "$(date '+%Y-%m-%d %H:%M:%S')"
+}
+JSON
+chown -R "$USER_NAME" "$HOME_DIR/Library/Application Support/NAM Suite"
+if [ -d "/Applications/NAM Suite/NAM Capture.app" ]; then
+  CAP="$HOME_DIR/Library/Application Support/NAM Capture"
+  mkdir -p "$CAP"
+  echo '{"lan": true, "trainer_host": "localhost"}' > "$CAP/settings.json"
+  chown -R "$USER_NAME" "$CAP"
+fi
+exit 0

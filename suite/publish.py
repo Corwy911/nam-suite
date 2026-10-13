@@ -18,10 +18,13 @@ PUBLISH_EXCLUDE = (
     "CLAUDE.md",                                   # notes for the AI assistant that works on the project
     "docs/",                                       # internal plans (the Mac port)
     "capture/manuale/",                            # the manual's sources and its builder
+    "capture/Manuale-NAM-Suite-IT.pdf",            # the manual's PDFs (also under the names they had before the Suite manual)
+    "capture/NAM-Suite-Manual-EN.pdf",
     "capture/Manuale-NAM-Capture-IT.pdf",
     "capture/NAM-Capture-Manual-EN.pdf",
+    "capture/capture_tool/seed/",                  # NAM's standard v3 input.wav, shipped inside the installers (a third-party file: not hosted in the public source)
     "capture/OBIETTIVO-UNITY-GAIN.md",             # a design note
-    "suite/macos/",                                # the Mac hand-over (comes with the Mac release)
+    "suite/macos/MAC-HANDOFF.md",                  # the Mac hand-over notes (the rest of suite/macos/ is the public Mac build)
 )
 
 

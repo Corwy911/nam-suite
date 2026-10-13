@@ -5,11 +5,13 @@
 /capture_tool/settings.json
 /tests/__pycache__/
 *.wav
+# the standard v3 input that ships with the app (copied into the library on first start)
+!/capture_tool/seed/input.wav
 *.nam
 *.log
 
 # --- packaging output (rebuilt by packaging/build_app.sh) ---
-/packaging/NAM Capture.app/
+/packaging/NAM Capture*.app/
 /packaging/AppIcon.iconset/
 /packaging/icon_preview.png
 /packaging/build/

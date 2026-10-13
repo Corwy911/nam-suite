@@ -21,3 +21,4 @@ __pycache__/
 # --- .NET build output ---
 **/bin/
 **/obj/
+.DS_Store

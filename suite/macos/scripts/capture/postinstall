@@ -1,0 +1,13 @@
+#!/bin/bash
+# Runs as root. When the Trainer is installed too, tell the capture where it is (same as the Windows installer):
+# trainer_host = localhost, in the console user's capture settings (nothing inside the signed app is touched).
+USER_NAME="$(stat -f%Su /dev/console)"
+HOME_DIR="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+[ -n "$HOME_DIR" ] || exit 0
+if [ -d "/Applications/NAM Suite/NAM Trainer.app" ]; then
+  DIR="$HOME_DIR/Library/Application Support/NAM Capture"
+  mkdir -p "$DIR"
+  echo '{"lan": true, "trainer_host": "localhost"}' > "$DIR/settings.json"
+  chown -R "$USER_NAME" "$DIR"
+fi
+exit 0

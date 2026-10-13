@@ -25,6 +25,7 @@ from typing import Callable, List, Optional, Tuple
 import numpy as np
 
 from . import calibration as cal
+from . import coreaudio_info
 
 if sys.platform == "win32":
     os.environ.setdefault("SD_ENABLE_ASIO", "1")  # must be set before sounddevice is imported (it picks the ASIO-enabled PortAudio)
@@ -48,6 +49,11 @@ class PortAudioBackend:
 
     kind = ""
     host_api = ""
+    # what a failed pre-check means, per platform: on Windows/ASIO a rejected format is (as good as always) a
+    # rate/channels matter for the driver panel; on macOS the input side can equally be blocked by the microphone
+    # permission, which PortAudio reports as the same generic paInternalError - hence the separate, honest keys
+    input_error_key = "rate_refused"
+    output_error_key = "rate_refused"
 
     def __init__(self):
         import sounddevice as sd
@@ -83,6 +89,10 @@ class PortAudioBackend:
     def _suggested_latency(self):
         """The `latency` handed to PortAudio. "low" is a word, not a size: what it turns into is the host API's own business."""
         return "low"
+
+    def _granted_buffer(self) -> Optional[int]:
+        """Hook: the buffer (frames) the driver really has while a stream is open, if this host API can tell (PortAudio itself only echoes the request)."""
+        return None
 
     def list_devices(self) -> list:
         if self.device is None:
@@ -127,8 +137,14 @@ class PortAudioBackend:
                 raise AudioError("bad_channels")
             self._check_rate(dev, rate)
             ain, aout = self._settings(dev, in_ch, out_ch)
-            sd.check_input_settings(device=index, channels=len(in_ch), samplerate=rate, extra_settings=ain)
-            sd.check_output_settings(device=index, channels=len(out_ch), samplerate=rate, extra_settings=aout)
+            try:
+                sd.check_input_settings(device=index, channels=len(in_ch), samplerate=rate, extra_settings=ain)
+            except Exception as e:
+                raise AudioError(self.input_error_key, f"{rate} Hz: {type(e).__name__}: {e}")
+            try:
+                sd.check_output_settings(device=index, channels=len(out_ch), samplerate=rate, extra_settings=aout)
+            except Exception as e:
+                raise AudioError(self.output_error_key, f"{rate} Hz: {type(e).__name__}: {e}")
         except AudioError:
             raise
         except Exception as e:
@@ -149,23 +165,37 @@ class PortAudioBackend:
 
     def _probe(self, rate: int, blocksize: int) -> None:
         # A short probe stream tells the real latency now (and fails early if the driver is busy or the rate is wrong).
+        # The probe is silent: the callback only fills the output with zeros.
         count = {"n": 0}
 
         def probe_callback(indata, outdata, frames, t, status):
             count["n"] += 1
             outdata.fill(0)
 
-        try:
-            probe = self._make_stream(callback=probe_callback)
-            with probe:
-                time.sleep(0.3)
-                before = count["n"]
-                time.sleep(0.4)
-                self._latency = tuple(int(round(v * rate)) for v in probe.latency)
-                self.blocksize = probe.blocksize or blocksize
-                running = count["n"] - before
-        except Exception as e:
-            raise AudioError("open_failed", f"{type(e).__name__}: {e}")
+        # The very first open can hit a transient HAL state - the microphone permission granted seconds earlier, a
+        # driver still waking after the interface was switched on - and PortAudio reports those exactly like a real
+        # failure, as the generic paInternalError. One quiet retry before giving up with the true error.
+        last: Optional[Exception] = None
+        for attempt in (1, 2):
+            try:
+                probe = self._make_stream(callback=probe_callback)
+                with probe:
+                    time.sleep(0.3)
+                    before = count["n"]
+                    time.sleep(0.4)
+                    self._latency = tuple(int(round(v * rate)) for v in probe.latency)
+                    granted = self._granted_buffer()
+                    self.blocksize = granted or probe.blocksize or blocksize
+                    if granted and blocksize and granted != blocksize:
+                        print(f"[driver] buffer asked {blocksize}, the driver has {granted}", file=sys.stderr, flush=True)
+                    running = count["n"] - before
+                break
+            except Exception as e:
+                last = e
+                if attempt == 1:
+                    time.sleep(0.6)
+        else:
+            raise AudioError("open_failed", f"{type(last).__name__}: {last}")
         if running < 3:
             # Some drivers deliver their first buffers and then nothing: no sample clock (card absent, external clock selected,
             # driver panel in a bad state). Better to know now than to hang in the middle of a take.
@@ -310,12 +340,38 @@ class AsioBackend(PortAudioBackend):
 
 class CoreAudioBackend(PortAudioBackend):
     """macOS. Only devices with both inputs and outputs are listed (one duplex stream needs one device). PortAudio is left to
-    use the device as the user set it (rate and buffer size come from the interface's own driver / Audio MIDI Setup); nothing
-    is changed from here, and a device running at another rate is refused instead of being resampled behind our back."""
+    use the device as the user set it for the rate (a device running at another rate is refused instead of being resampled behind our back);
+    the buffer is the one chosen on the page (set on the driver through PortAudio's change_device_parameters), or, with "Automatic", the
+    one the device has now."""
 
     kind = "coreaudio"
     host_api = "Core Audio"
     VIRTUAL = re.compile(r"blackhole|teams|zoom|loopback|soundflower|aggregate|multi-output|virtual", re.I)
+    # on macOS a rejected format on the input side is most often the microphone permission (PortAudio reports it
+    # as the same generic paInternalError as any other refusal): say so, instead of blaming the sample rate
+    input_error_key = "input_refused"
+    output_error_key = "output_refused"
+
+    _requested_blocksize = 0
+
+    def open(self, device_id: str, in_ch, out_ch, rate: int = 48_000, blocksize: int = 0, probe: bool = True) -> None:
+        # "Automatic" (0) = keep what the interface has now (its panel's value), exactly like ASIO: it is read from Core Audio and handed on as an explicit
+        # size. Measured on a Fireface UC: with latency="low" PortAudio moved the buffer by itself (512 -> 404 / 448) even when nothing was asked.
+        if not blocksize:
+            try:
+                blocksize = coreaudio_info.buffer_frames(self.sd.query_devices(int(device_id.split(":", 1)[1]))["name"]) or 0
+            except Exception:
+                blocksize = 0
+        self._requested_blocksize = blocksize
+        super().open(device_id, in_ch, out_ch, rate, blocksize, probe)
+
+    def _suggested_latency(self):
+        # buffering target = exactly one buffer. With the word "low" PortAudio decides the I/O buffer by itself and ignores the block size (measured on a
+        # Fireface UC: asked 64, got 448, a 30 ms round trip); with one buffer's worth of seconds the driver is set to exactly that size (64 -> 64).
+        return (self.blocksize / self.rate) if self.blocksize else "low"
+
+    def _granted_buffer(self) -> Optional[int]:
+        return coreaudio_info.buffer_frames(getattr(self, "device_name", ""))
 
     def _usable(self, dev) -> bool:
         return dev["max_input_channels"] > 0 and dev["max_output_channels"] > 0
@@ -332,8 +388,12 @@ class CoreAudioBackend(PortAudioBackend):
 
     def _settings(self, dev, in_ch, out_ch):
         sd = self.sd
-        return (sd.CoreAudioSettings(channel_map=list(in_ch)),
-                sd.CoreAudioSettings(channel_map=self.output_map(dev["max_output_channels"], out_ch)))
+        # Without `change_device_parameters` PortAudio leaves the interface's I/O buffer as it is (the 512 of its own panel) whatever block size is asked
+        # of the stream: the buffer chosen on the page never reached the driver. With a size it is allowed to set it (the rate is never changed:
+        # _check_rate has already refused a device that is not at the right one). "Automatic" has been turned into the size the device has now, so it stays.
+        extra = {"change_device_parameters": True} if self._requested_blocksize else {}
+        return (sd.CoreAudioSettings(channel_map=list(in_ch), **extra),
+                sd.CoreAudioSettings(channel_map=self.output_map(dev["max_output_channels"], out_ch), **extra))
 
     def _check_rate(self, dev, rate: int) -> None:
         if abs(float(dev["default_samplerate"]) - rate) > 0.5:

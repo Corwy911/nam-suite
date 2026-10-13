@@ -242,6 +242,8 @@
     "ui.tag.lib": "già caricato",
     "ui.tag.new": "nuovo",
     "ui.remove": "Rimuovi",
+    "ui.capture.received": "Ricevuta da NAM Capture: «{name}». È già tra i file output, con livelli, nome e tipo di gear; il file di input è quello con cui è stata fatta.",
+    "ui.capture.received_no_input": "Ricevuta da NAM Capture: «{name}». È già tra i file output, con livelli, nome e tipo di gear. Scegli qui sotto il file di input standard con cui è stata fatta (non è ancora nella libreria).",
     "ui.retrain.text": "Nuovo training basato su «{name}»: stesso input e output, cambia trainer o parametri qui sotto.",
 
     "ui.models.title": "Modelli generati",
@@ -608,6 +610,8 @@
     "ui.tag.lib": "uploaded",
     "ui.tag.new": "new",
     "ui.remove": "Remove",
+    "ui.capture.received": "Received from NAM Capture: \"{name}\". It is already among the output files, with levels, name and gear type; the input file is the one it was made with.",
+    "ui.capture.received_no_input": "Received from NAM Capture: \"{name}\". It is already among the output files, with levels, name and gear type. Pick the standard input file it was made with below (it is not in the library yet).",
     "ui.retrain.text": "New training based on \"{name}\": same input and output, change the trainer or parameters below.",
 
     "ui.models.title": "Generated models",

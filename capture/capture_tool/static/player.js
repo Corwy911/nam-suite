@@ -418,7 +418,7 @@ function renderLanes(c) {
        [t("cap.player.lane.ret", { n: tg.returnCh + 1 })], [pg ? db(g.amp_pre_a) : "? dB", "gain"], ...ampNodes, ...(irOn ? [[t("cap.player.lane.ir")]] : []),
        [g ? db(g.post) : "? dB", "gain"], [monitor, "end"]]
     : [[t("cap.player.lane.guitar", { n: tg.guitarCh + 1 })], [db(feed), "gain"], [t("cap.player.lane.out", { n: tg.outCh + 1 })], [t("cap.player.lane.reamp")],
-    [t(head ? "cap.player.lane.head" : "cap.player.lane.pedal"), "gear"], [t("cap.player.lane.ret", { n: tg.returnCh + 1 })], [db(amp), "gain"],
+    [t(pedalTest ? "cap.player.lane.pedal" : "cap.player.lane.amp"), "gear"], [t("cap.player.lane.ret", { n: tg.returnCh + 1 })], [db(amp), "gain"],
     ...(irGear ? [[t("cap.player.lane.ir")]] : []), [monitor, "end"]];
   const laneB = pedalTest
     ? [[t("cap.player.lane.guitar", { n: tg.guitarCh + 1 })], [pg ? db(g.pedal_pre) : "? dB", "gain"], [`${t("cap.player.lane.pedal_model")} · ${plLabel("pedal", P.ref.pedal)}`, "gear"],
@@ -484,7 +484,7 @@ function renderPlayer() {
 
   // the A/B console
   const pedalTest = !!P.ref.pedal;
-  const gearName = t(head && !pedalTest ? "cap.player.ab.a_head" : "cap.player.ab.a_pedal");
+  const gearName = t(pedalTest ? "cap.player.ab.a_pedal" : "cap.player.ab.a_amp");    // not the step-2 radio: with no pedal loaded A is the real amp, whatever step 2 says
   $("#plKeyALabel").textContent = gearName;
   $("#plKeyBLabel").textContent = t(pedalTest ? "cap.player.ab.b_pedal" : "cap.player.ab.b");
   for (const [id, leg] of [["#plKeyA", "A"], ["#plKeyB", "B"]]) { $(id).setAttribute("aria-pressed", String(P.running && P.leg === leg)); $(id).disabled = !P.running; }
@@ -505,7 +505,9 @@ function renderPlayer() {
   const levels = sp.model_input_level_dbu != null && sp.model_output_level_dbu != null
     ? " " + t("cap.player.model_levels", { in: f2(sp.model_input_level_dbu), out: f2(sp.model_output_level_dbu) }) : "";
   $("#plInfoDetail").textContent = g ? t("cap.player.running", { feed: f2(sp.feed_gain_db), pre: f2(g.pre), post: f2(g.post), amp: f2(g.amp) }) + levels
-    + (g.model_levels === false ? " " + t("cap.player.no_levels") : "") + (sp.cal && g.amp_matched === false ? " " + t("cap.player.no_return_running") : "") : "";
+    + (g.model_levels === false && !g.pre_from_profile ? " " + t("cap.player.no_levels") : "")
+    + (g.post_assumed ? " " + t("cap.player.output_assumed") : (g.pre_from_profile && g.model_levels === false ? " " + t("cap.player.output_manual") : ""))
+    + (sp.cal && g.amp_matched === false ? " " + t("cap.player.no_return_running") : "") : "";
   renderPlayerDiag(c, st);
   setMeters($("#plMeters"), [[t("cap.player.meter_a"), st.a_peak_dbfs], [t("cap.player.meter_b"), st.b_peak_dbfs], [t("cap.player.meter_out"), st.out_peak_dbfs],
     [t("cap.player.meter_gin"), st.guitar_in_peak_dbfs], [t("cap.player.meter_gout"), st.guitar_out_peak_dbfs]]);

@@ -5,25 +5,34 @@
    Drop this file next to retro.css and link it after - that is the whole install. */
 
 /* ------------------------------------------------------------------ the room: deeper air around the parquet */
-body {
+/* the same layers as before, but on retro.css's fixed body::before layer instead of `background-attachment: fixed` on the body: the
+   look is identical, and WebKit no longer repaints the whole page at every scroll step (measured in a WKWebView: 23 ms per frame and
+   most frames late while scrolling -> 14 ms, almost none late) */
+body { background: #dcc49d; }
+body::before {
   background:
     linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
     radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
     radial-gradient(ellipse 130% 100% at 50% 38%, transparent 52%, rgba(58, 34, 9, .26) 96%),
     url("/parquet.svg") 0 0 / 480px 360px,
     #dcc49d;
-  background-attachment: fixed;
 }
 
 /* ------------------------------------------------------------------ the grey units: machined edge + four screws + layered shadow */
 header, .card {
   background:
-    linear-gradient(transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) 9px calc(100% - 9px) / 9px 9px no-repeat,
-    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) 9px calc(100% - 9px) / 9px 9px no-repeat,
-    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) 9px calc(100% - 9px) / 9px 9px no-repeat,
-    linear-gradient(90deg, transparent 3.5px, rgba(15, 14, 13, .95) 3.5px 5.5px, transparent 5.5px) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
-    radial-gradient(circle 2.3px at 3.2px 2.8px, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
-    radial-gradient(circle 4.5px at 4.5px 4.5px, #c4c3be 0, #9b9a95 40%, #6f6e6a 72%, #3c3b38 90%, #262523 96%, rgba(38, 37, 35, 0) 100%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    /* the two BOTTOM screws are background tiles, and a tile cannot be rounded - so the screw is painted
+       round: face + dark rim fade to transparent inside the 9px square, which therefore never shows.
+       Slot, fixed glint, turned face, and the light bite the panel catches under it, like the top ones */
+    radial-gradient(ellipse 4.1px .9px at 50% 48%, rgba(15, 14, 13, .95) 0 98%, transparent 100%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(ellipse 2.5px 1.9px at 36% 29%, rgba(244, 243, 238, .85), transparent 100%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 5.2px at 50% 48%, #c4c3be 0 22%, #8a8984 46%, #6f6e6a 62%, #3c3b38 74%, #262523 80%, transparent 81%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(ellipse 4.6px 1.5px at 50% 100%, rgba(255, 255, 255, .45), transparent 70%) 9px calc(100% - 9px) / 9px 9px no-repeat,
+    /* the bottom-right one: same screw, slot turned 90 degrees like on the real faceplate */
+    radial-gradient(ellipse .9px 4.1px at 50% 48%, rgba(15, 14, 13, .95) 0 98%, transparent 100%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(ellipse 2.5px 1.9px at 36% 29%, rgba(244, 243, 238, .85), transparent 100%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(circle 5.2px at 50% 48%, #c4c3be 0 22%, #8a8984 46%, #6f6e6a 62%, #3c3b38 74%, #262523 80%, transparent 81%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
+    radial-gradient(ellipse 4.6px 1.5px at 50% 100%, rgba(255, 255, 255, .45), transparent 70%) calc(100% - 9px) calc(100% - 9px) / 9px 9px no-repeat,
     repeating-linear-gradient(90deg, rgba(255, 255, 255, .055) 0 1px, transparent 1px 3px),
     linear-gradient(180deg, var(--g1), var(--g2) 50%, var(--g3));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75),

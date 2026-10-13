@@ -18,7 +18,7 @@ from i18n import tr
 
 from . import core, devices, live, monitor, player, takes, trainer, tuner
 from .core import configure, shutdown
-from .takes import organize_library
+from .takes import organize_library, seed_standard_input
 
 
 def require_local(request: Request) -> None:

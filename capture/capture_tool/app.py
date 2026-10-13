@@ -35,7 +35,9 @@ HERE = Path(__file__).resolve().parent
 
 # Per-user data lives in the OS's standard per-user data location, not next to the program: a real app's files survive
 # a rebuild of the app bundle and do not depend on where the program itself happens to be installed.
-if sys.platform == "win32":
+if os.environ.get("NAM_CAPTURE_DATA", "").strip():          # a test run keeps its data apart from the real library (see 'test' folder)
+    APP_SUPPORT = Path(os.environ["NAM_CAPTURE_DATA"].strip()).expanduser()
+elif sys.platform == "win32":
     APP_SUPPORT = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "NAM Capture"
 else:
     APP_SUPPORT = Path.home() / "Library" / "Application Support" / "NAM Capture"
@@ -104,6 +106,12 @@ async def lifespan(_app: FastAPI):
             print(f"library tidied: inputs -> Input/ {moved['inputs']}, results -> own folders {moved['results']}", flush=True)
     except Exception as e:  # tidying is a courtesy: never keep the app from starting
         print(f"library tidy-up skipped: {e}", flush=True)
+    try:
+        seeded = capture_api.seed_standard_input(HERE / "seed" / "input.wav")
+        if seeded:
+            print(f"standard v3 input put in the library: Input/{seeded}", flush=True)
+    except Exception as e:
+        print(f"standard input not seeded: {e}", flush=True)
     yield
     capture_api.shutdown()  # release the audio interface (the engine process also leaves on its own if this dies)
 

@@ -26,12 +26,16 @@
 html { min-height: 100%; }
 body {
   font-family: var(--font-body); font-size: 15px; line-height: 1.5; color: var(--ink); min-height: 100vh;
+  background: #dcc49d;
+}
+/* light oak parquet (planks are in parquet.svg) on a fixed layer of its own: `background-attachment: fixed` makes WebKit
+   repaint the whole page at every scroll step, a position:fixed layer is painted once and only composited */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
     linear-gradient(100deg, transparent 0 38%, rgba(255, 255, 255, .28) 46%, transparent 56%),
     radial-gradient(ellipse at 50% 0, rgba(255, 255, 255, .22), transparent 60%),
-    url("/parquet.svg") 0 0 / 480px 360px,
-    #dcc49d;                                   /* light oak parquet: planks are in parquet.svg */
-  background-attachment: fixed;
+    url("/parquet.svg") 0 0 / 480px 360px;
 }
 main { max-width: 980px; }
 
