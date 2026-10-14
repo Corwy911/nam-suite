@@ -1,8 +1,15 @@
-# NAM Suite
+<p align="center"><img src="suite/assets/nam-suite.png" width="112" alt="NAM Suite"></p>
 
-**Train, capture and try [Neural Amp Modeler](https://github.com/sdatkinson/neural-amp-modeler) profiles — two apps, one installer.**
+<h1 align="center">NAM Suite</h1>
 
-*[Versione italiana: README.it.md](README.it.md)*
+<p align="center"><b>Train, capture and try <a href="https://github.com/sdatkinson/neural-amp-modeler">Neural Amp Modeler</a> profiles — two apps, one installer.</b></p>
+
+<p align="center"><img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square&logo=windows&logoColor=white"> <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=flat-square&logo=apple&logoColor=white"> <img alt="License" src="https://img.shields.io/badge/license-MIT-b8860b?style=flat-square"> <img alt="Version" src="https://img.shields.io/badge/version-1.0-5a7d3a?style=flat-square"></p>
+
+<p align="center"><a href="../../releases/latest"><b>Download</b></a> &nbsp;·&nbsp; <a href="README.it.md">Italiano</a></p>
+
+<p align="center"><img src="assets/screenshots/nam-capture-calibration.jpg" width="860" alt="NAM Capture: audio interface, capture type and output calibration"></p>
+<p align="center"><sub>NAM Capture, here in its demo mode (a simulated interface). Screenshots are in English; both apps also speak Italian.</sub></p>
 
 | | |
 |---|---|
@@ -10,6 +17,18 @@
 | **NAM Capture** | A calibrated **reamp capture** tool: it measures the levels of your audio interface in dBu, records the standard NAM test signal through your amp or pedal, checks and aligns the take, writes the levels into the model and sends everything to the Trainer. It also plays your models live: **NAM + IR test**, a **NAM player** with A/B against the real amp, a **pedal test** (pedal NAM in front of the amp's NAM) and a precise **tuner**. |
 
 > **Windows and macOS.** Version 1.0 comes for Windows 10/11 and for Macs with Apple Silicon (training on the Apple GPU through Metal).
+
+## A look
+
+<table>
+  <tr>
+    <td width="42%" valign="top"><img src="assets/screenshots/nam-trainer.jpg" alt="NAM Trainer"><br><sub><b>NAM Trainer</b> - queue, live progress, ESR; here with a capture just received from NAM Capture</sub></td>
+    <td width="58%" valign="top">
+      <img src="assets/screenshots/nam-capture-result.jpg" alt="NAM Capture result"><br><sub><b>NAM Capture</b> - the report of a take: latency, replicate ESR, peak, noise floor, the levels written into the model</sub><br><br>
+      <img src="assets/screenshots/nam-player.jpg" alt="NAM Player"><br><sub><b>NAM Player</b> - A/B against the real amp, with the NAM and the cabinet IR</sub>
+    </td>
+  </tr>
+</table>
 
 ## Download and install (Windows)
 

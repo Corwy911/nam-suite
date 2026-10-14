@@ -1,8 +1,15 @@
-# NAM Suite
+<p align="center"><img src="suite/assets/nam-suite.png" width="112" alt="NAM Suite"></p>
 
-**Addestra, cattura e prova i profili [Neural Amp Modeler](https://github.com/sdatkinson/neural-amp-modeler): due app, un solo installatore.**
+<h1 align="center">NAM Suite</h1>
 
-*[English version: README.md](README.md)*
+<p align="center"><b>Addestra, cattura e prova i profili <a href="https://github.com/sdatkinson/neural-amp-modeler">Neural Amp Modeler</a>: due app, un solo installatore.</b></p>
+
+<p align="center"><img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square&logo=windows&logoColor=white"> <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111111?style=flat-square&logo=apple&logoColor=white"> <img alt="License" src="https://img.shields.io/badge/license-MIT-b8860b?style=flat-square"> <img alt="Version" src="https://img.shields.io/badge/version-1.0-5a7d3a?style=flat-square"></p>
+
+<p align="center"><a href="../../releases/latest"><b>Scarica</b></a> &nbsp;·&nbsp; <a href="README.md">English</a></p>
+
+<p align="center"><img src="assets/screenshots/nam-capture-calibration.jpg" width="860" alt="NAM Capture: scheda audio, tipo di cattura e calibrazione dell'uscita"></p>
+<p align="center"><sub>NAM Capture, qui in modalità demo (una scheda simulata). Le schermate sono in inglese; le due app parlano anche italiano.</sub></p>
 
 | | |
 |---|---|
@@ -10,6 +17,18 @@
 | **NAM Capture** | Uno strumento di **cattura reamp calibrata**: misura i livelli della tua scheda audio in dBu, registra il segnale di prova standard di NAM attraverso il tuo ampli o pedale, controlla e allinea la registrazione, scrive i livelli nel modello e manda tutto al Trainer. Suona anche i modelli dal vivo: **prova NAM + IR**, un **Lettore NAM** con confronto A/B con l'ampli vero, un **Test Pedali** (NAM del pedale davanti a quello dell'ampli) e un **accordatore** preciso. |
 
 > **Windows e macOS.** La versione 1.0 esiste per Windows 10/11 e per i Mac con Apple Silicon (addestramento sulla GPU Apple tramite Metal).
+
+## Uno sguardo
+
+<table>
+  <tr>
+    <td width="42%" valign="top"><img src="assets/screenshots/nam-trainer.jpg" alt="NAM Trainer"><br><sub><b>NAM Trainer</b> - coda, avanzamento in diretta, ESR; qui con una cattura appena ricevuta da NAM Capture</sub></td>
+    <td width="58%" valign="top">
+      <img src="assets/screenshots/nam-capture-result.jpg" alt="NAM Capture result"><br><sub><b>NAM Capture</b> - il rapporto di una registrazione: latenza, ESR delle repliche, picco, rumore di fondo, livelli scritti nel modello</sub><br><br>
+      <img src="assets/screenshots/nam-player.jpg" alt="NAM Player"><br><sub><b>NAM Player</b> - A/B contro l'ampli vero, con il NAM e la IR della cassa</sub>
+    </td>
+  </tr>
+</table>
 
 ## Scarica e installa (Windows)
 
